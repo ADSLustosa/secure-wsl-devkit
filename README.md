@@ -70,6 +70,16 @@ Setting up WSL 2 by hand on more than one computer leads to three silent problem
 
 ## 🔄 How it works
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/flow-en-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/flow-en-light.svg">
+  <img alt="How setup.sh works: six steps run in order; the first three always run and the last three are skipped when already done." src="assets/flow-en-dark.svg" width="100%">
+</picture>
+
+<details>
+<summary><b>🧩 Detailed decision flow (Mermaid)</b></summary>
+<br>
+
 ```mermaid
 flowchart TD
     A([./setup.sh]) --> B{Running as root<br/>or outside WSL?}
@@ -94,6 +104,8 @@ flowchart TD
 
 Each **diamond** is an idempotency check: the step only runs when the configuration is missing.
 
+</details>
+
 <details>
 <summary><b>🧰 What it configures</b> (click to expand)</summary>
 <br>
@@ -111,6 +123,12 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 </details>
 
 ## 🔐 Security decisions
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/gates-en-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/gates-en-light.svg">
+  <img alt="Every change passes four gates: a signed commit reaches the protected main branch through a pull request with a green CI, while a direct push is rejected." src="assets/gates-en-dark.svg" width="100%">
+</picture>
 
 | Decision | Reasoning |
 |---|---|
@@ -211,7 +229,7 @@ secure-wsl-devkit/
 │       └── shellcheck.yml   # CI: static analysis on every push and pull request
 ├── assets/
 │   ├── generate.py          # Generates every README visual (stdlib only)
-│   └── *.svg                # Animated banner, terminal demo and impact cards
+│   └── *.svg                # Banner, terminal, impact, flow, security gates and roadmap
 ├── setup.sh                 # Idempotent setup script
 ├── LICENSE
 ├── README.md                # English
@@ -219,6 +237,16 @@ secure-wsl-devkit/
 ```
 
 ## 🧭 Roadmap
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-en-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-en-light.svg">
+  <img alt="Roadmap: 5 of 9 milestones delivered; next is validating the script on a fresh distribution in CI." src="assets/roadmap-en-dark.svg" width="100%">
+</picture>
+
+<details>
+<summary><b>📝 Text version</b></summary>
+<br>
 
 - ✅ Idempotent setup script
 - ✅ Signed commits via SSH
@@ -229,6 +257,8 @@ secure-wsl-devkit/
 - 🔜 Container runtime setup (Docker Desktop WSL integration)
 - 🔜 Secret scanning before every commit with Gitleaks + pre-commit
 - 🔜 Pin GitHub Actions by commit SHA, kept up to date by Dependabot
+
+</details>
 
 ## 📄 License
 

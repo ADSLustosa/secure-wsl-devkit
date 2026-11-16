@@ -24,12 +24,12 @@ THEMES = {
     "dark": {
         "bg": "#0d1117", "panel": "#161b22", "border": "#30363d", "grid": "#1c2129",
         "text": "#e6edf3", "muted": "#8b949e", "accent": "#22d3ee", "accent2": "#a78bfa",
-        "green": "#3fb950", "shine": "#ffffff",
+        "green": "#3fb950", "red": "#f85149", "shine": "#ffffff",
     },
     "light": {
         "bg": "#ffffff", "panel": "#f6f8fa", "border": "#d0d7de", "grid": "#eef1f4",
         "text": "#1f2328", "muted": "#59636e", "accent": "#0e7490", "accent2": "#7c3aed",
-        "green": "#1a7f37", "shine": "#22d3ee",
+        "green": "#1a7f37", "red": "#cf222e", "shine": "#22d3ee",
     },
 }
 
@@ -47,6 +47,36 @@ TEXTS = {
             ("3", "0", "Windows binaries shadowing Linux", "npm · npx · docker", 1.0, 0.0, "accent"),
             ("0%", "100%", "Signed and verified commits", "SSH signature · Verified badge", 0.0, 1.0, "green"),
         ],
+        "flow_title": "How setup.sh works",
+        "flow_sub": "Every step either runs or detects the existing configuration, so it is safe to repeat",
+        "flow_desc": "Six steps run in order: check environment, base packages, Git and signing, cut the Windows PATH, "
+                     "PATH allowlist and Node.js LTS. The first three always run; the last three are skipped when already done.",
+        "flow_steps": [
+            ("Check environment", "root? WSL 2?", True),
+            ("Base packages", "apt-get", True),
+            ("Git + signing", "git config", True),
+            ("Cut Windows PATH", "/etc/wsl.conf", False),
+            ("PATH allowlist", "~/.bashrc", False),
+            ("Node.js LTS", "nvm", False),
+        ],
+        "flow_always": "runs every time",
+        "flow_skip": "skips if done",
+        "gates_title": "Every change passes four gates",
+        "gates_sub": "A signed commit reaches main only through a pull request with a green CI; a direct push is rejected",
+        "gates_desc": "A signed commit passes four gates (signed commit, pull request only, ShellCheck CI and verified "
+                      "commits only) and reaches the protected main branch. A direct push is rejected at the pull request gate.",
+        "gates": [("Signed commit", "ssh-ed25519"), ("Pull request only", "ruleset"),
+                  ("ShellCheck CI", "github actions"), ("Verified only", "ruleset")],
+        "gates_ok": "✓ commit",
+        "gates_bad": "✕ direct push",
+        "gates_blocked": "rejected: changes must go through a pull request",
+        "gates_target": "protected",
+        "road_sub": "{done} of {total} milestones delivered · next: {next}",
+        "road_items": [
+            ("Idempotent setup", True), ("Signed commits", True), ("PATH allowlist", True),
+            ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", False),
+            ("Container runtime", False), ("Gitleaks", False), ("Pinned actions", False),
+        ],
     },
     "pt": {
         "tagline": "Setup do WSL 2 automatizado, idempotente e seguro",
@@ -60,6 +90,36 @@ TEXTS = {
             ("32", "2", "Pastas do Windows no PATH do Linux", "restam só o VS Code e o C:\\Windows", 1.0, 2 / 32, "accent"),
             ("3", "0", "Binários do Windows sobrepondo o Linux", "npm · npx · docker", 1.0, 0.0, "accent"),
             ("0%", "100%", "Commits assinados e verificados", "assinatura SSH · selo Verified", 0.0, 1.0, "green"),
+        ],
+        "flow_title": "Como o setup.sh funciona",
+        "flow_sub": "Cada etapa executa ou detecta a configuração existente, por isso é seguro repetir",
+        "flow_desc": "Seis etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, corte do PATH do Windows, "
+                     "liberação do VS Code e Node.js LTS. As três primeiras sempre executam; as três últimas são puladas quando já feitas.",
+        "flow_steps": [
+            ("Verifica ambiente", "root? WSL 2?", True),
+            ("Pacotes base", "apt-get", True),
+            ("Git + assinatura", "git config", True),
+            ("Corta PATH Win", "/etc/wsl.conf", False),
+            ("Libera VS Code", "~/.bashrc", False),
+            ("Node.js LTS", "nvm", False),
+        ],
+        "flow_always": "roda sempre",
+        "flow_skip": "pula se pronto",
+        "gates_title": "Toda mudança passa por quatro portões",
+        "gates_sub": "Um commit assinado só chega à main por pull request com CI verde; um push direto é recusado",
+        "gates_desc": "Um commit assinado passa por quatro portões (commit assinado, somente pull request, CI com ShellCheck e "
+                      "somente commits verificados) e chega à branch main protegida. Um push direto é recusado no portão do pull request.",
+        "gates": [("Commit assinado", "ssh-ed25519"), ("Só via PR", "ruleset"),
+                  ("CI ShellCheck", "github actions"), ("Só verificados", "ruleset")],
+        "gates_ok": "✓ commit",
+        "gates_bad": "✕ push direto",
+        "gates_blocked": "recusado: mudanças só entram por pull request",
+        "gates_target": "protegida",
+        "road_sub": "{done} de {total} entregas concluídas · próxima: {next}",
+        "road_items": [
+            ("Setup idempotente", True), ("Commits assinados", True), ("PATH seletivo", True),
+            ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", False),
+            ("Contêineres", False), ("Gitleaks", False), ("Actions fixadas", False),
         ],
     },
 }
@@ -296,12 +356,241 @@ text {{ font-family: {SANS}; }}
     )
 
 
+# --------------------------------------------------------------------------- shared pieces
+def header_css(c):
+    return (
+        f"text {{ font-family: {SANS}; }} "
+        f".title {{ font-size: 26px; font-weight: 800; fill: {c['text']}; }} "
+        f".sub {{ font-size: 15px; fill: {c['muted']}; }} "
+        f".mono {{ font-family: {MONO}; }} "
+    )
+
+
+def frame(w, h, c, title, sub):
+    return (
+        f'<rect x="0.5" y="0.5" width="{w - 1}" height="{h - 1}" rx="16" fill="{c["bg"]}" stroke="{c["border"]}"/>\n'
+        f'<text x="32" y="54" class="title">{escape(title)}</text>\n'
+        f'<text x="32" y="82" class="sub">{escape(sub)}</text>\n'
+    )
+
+
+def fade_keyframes(name, appear, hide_from=94):
+    """Hidden until `appear`%, visible until `hide_from`%, then fades out to restart the loop."""
+    return (f"@keyframes {name} {{ 0%, {appear:.2f}% {{ opacity: 0; }} "
+            f"{appear + 2:.2f}%, {hide_from}% {{ opacity: 1; }} 100% {{ opacity: 0; }} }}")
+
+
+# --------------------------------------------------------------------------- flow
+def flow(lang, theme):
+    t, c = TEXTS[lang], THEMES[theme]
+    w, h = 1200, 300
+    steps = t["flow_steps"]
+    n, left, gap, top, card_h = len(steps), 32, 20, 104, 132
+    card_w = (w - 2 * left - gap * (n - 1)) / n
+    loop, travel = 7.5, 75  # loop length in seconds; % of the loop spent travelling
+    track_y = top + card_h + 32
+    x_start = left + card_w / 2
+    dist = (n - 1) * (card_w + gap)
+
+    css = [
+        header_css(c),
+        f".step {{ font-size: 14px; font-weight: 700; fill: {c['text']}; }}",
+        f".detail {{ font-family: {MONO}; font-size: 12px; fill: {c['muted']}; }}",
+        f".num {{ font-size: 13px; font-weight: 700; fill: {c['text']}; }}",
+        f".pill {{ font-family: {MONO}; font-size: 11px; }}",
+        f".track {{ transform-box: fill-box; transform-origin: left center; transform: scaleX(1); "
+        f"animation: track {loop}s linear infinite; }}",
+        f"@keyframes track {{ 0% {{ transform: scaleX(0); opacity: 1; }} {travel}% {{ transform: scaleX(1); }} "
+        f"94% {{ opacity: 1; }} 100% {{ transform: scaleX(1); opacity: 0; }} }}",
+        f".dot {{ transform: translateX({dist:.1f}px); animation: dot {loop}s linear infinite; }}",
+        f"@keyframes dot {{ 0% {{ transform: translateX(0); opacity: 1; }} {travel}% {{ transform: translateX({dist:.1f}px); }} "
+        f"94% {{ opacity: 1; }} 100% {{ transform: translateX({dist:.1f}px); opacity: 0; }} }}",
+    ]
+    cards = []
+    for i, (title, detail, always) in enumerate(steps):
+        x = left + i * (card_w + gap)
+        appear = i / (n - 1) * travel
+        css.append(f".k{i} {{ animation: k{i} {loop}s linear infinite; }} " + fade_keyframes(f"k{i}", appear))
+        color = c["muted"] if always else c["accent2"]
+        label = t["flow_always"] if always else t["flow_skip"]
+        bx, by = x + 28, top + 30
+        cards.append(
+            f'<rect x="{x:.1f}" y="{top}" width="{card_w:.1f}" height="{card_h}" rx="12" fill="{c["panel"]}" stroke="{c["border"]}"/>'
+            f'<rect class="k{i}" x="{x:.1f}" y="{top}" width="{card_w:.1f}" height="{card_h}" rx="12" fill="none" '
+            f'stroke="{c["accent"]}" stroke-width="2"/>'
+            f'<circle cx="{bx:.1f}" cy="{by}" r="13" fill="{c["border"]}"/>'
+            f'<text x="{bx:.1f}" y="{by + 5}" text-anchor="middle" class="num">{i + 1}</text>'
+            f'<g class="k{i}"><circle cx="{bx:.1f}" cy="{by}" r="13" fill="{c["green"]}"/>'
+            f'<text x="{bx:.1f}" y="{by + 5}" text-anchor="middle" class="num" fill="#ffffff" style="fill:#ffffff">✓</text></g>'
+            f'<text x="{x + 16:.1f}" y="{top + 70}" class="step">{escape(title)}</text>'
+            f'<text x="{x + 16:.1f}" y="{top + 90}" class="detail">{escape(detail)}</text>'
+            f'<rect x="{x + 16:.1f}" y="{top + 102}" width="{card_w - 32:.1f}" height="20" rx="10" fill="none" stroke="{color}"/>'
+            f'<text x="{x + card_w / 2:.1f}" y="{top + 116}" text-anchor="middle" class="pill" fill="{color}">{escape(label)}</text>'
+        )
+
+    track = (
+        f'<rect x="{x_start:.1f}" y="{track_y - 2}" width="{dist:.1f}" height="4" rx="2" fill="{c["border"]}"/>'
+        f'<rect class="track" x="{x_start:.1f}" y="{track_y - 2}" width="{dist:.1f}" height="4" rx="2" fill="{c["accent"]}"/>'
+        f'<g class="dot"><circle cx="{x_start:.1f}" cy="{track_y}" r="12" fill="{c["accent"]}" fill-opacity="0.25"/>'
+        f'<circle cx="{x_start:.1f}" cy="{track_y}" r="6" fill="{c["accent"]}"/></g>'
+    )
+    return (
+        svg_open(w, h, t["flow_title"], t["flow_desc"])
+        + f"<style>{' '.join(css)} {REDUCED_MOTION}</style>\n"
+        + frame(w, h, c, t["flow_title"], t["flow_sub"])
+        + "\n".join(cards) + "\n" + track + "\n</svg>\n"
+    )
+
+
+# --------------------------------------------------------------------------- security gates
+def gates(lang, theme):
+    t, c = TEXTS[lang], THEMES[theme]
+    w, h = 1200, 330
+    loop = 9.0
+    gate_x = [360, 560, 760, 960]
+    g_top, lane_ok, lane_bad = 142, 190, 258
+    g_h = lane_bad + 24 - g_top
+    start, target_x, target_w = 40, 1030, 140
+    ok_w, bad_w = 120, 160
+    ok_dist = target_x + (target_w - ok_w) / 2 - start
+    bad_dist = gate_x[1] - 12 - bad_w - start
+    ok_end = 50  # % of the loop the valid commit takes to reach main
+
+    css = [
+        header_css(c),
+        f".gtitle {{ font-size: 14px; font-weight: 700; fill: {c['text']}; }}",
+        f".gdetail {{ font-family: {MONO}; font-size: 12px; fill: {c['muted']}; }}",
+        f".packet {{ font-family: {MONO}; font-size: 13px; font-weight: 700; }}",
+        f".ok {{ transform: translateX({ok_dist:.1f}px); animation: ok {loop}s cubic-bezier(.45,0,.55,1) infinite; }}",
+        f"@keyframes ok {{ 0% {{ transform: translateX(0); opacity: 1; }} {ok_end}% {{ transform: translateX({ok_dist:.1f}px); }} "
+        f"94% {{ opacity: 1; }} 100% {{ transform: translateX({ok_dist:.1f}px); opacity: 0; }} }}",
+        f".bad {{ transform: translateX({bad_dist:.1f}px); animation: bad {loop}s ease-in-out infinite; }}",
+        f"@keyframes bad {{ 0%, 52% {{ transform: translateX(0); opacity: 0; }} 54% {{ opacity: 1; }} "
+        f"74% {{ transform: translateX({bad_dist:.1f}px); }} 75.5% {{ transform: translateX({bad_dist - 10:.1f}px); }} "
+        f"77% {{ transform: translateX({bad_dist:.1f}px); }} 78.5% {{ transform: translateX({bad_dist - 6:.1f}px); }} "
+        f"80%, 94% {{ transform: translateX({bad_dist:.1f}px); opacity: 1; }} 100% {{ transform: translateX({bad_dist:.1f}px); opacity: 0; }} }}",
+        f".flash {{ opacity: 0; animation: flash {loop}s linear infinite; }}",
+        "@keyframes flash { 0%, 73% { opacity: 0; } 75% { opacity: 1; } 78% { opacity: 0.3; } 81% { opacity: 1; } 86%, 100% { opacity: 0; } }",
+        f".blocked {{ animation: blocked {loop}s linear infinite; }} " + fade_keyframes("blocked", 80),
+        f".target {{ animation: target {loop}s linear infinite; }} " + fade_keyframes("target", ok_end - 2),
+    ]
+
+    parts = []
+    for y in (lane_ok, lane_bad):
+        parts.append(f'<path d="M{start} {y} H{target_x}" stroke="{c["border"]}" stroke-dasharray="4 7"/>')
+    for i, (cx, (title, detail)) in enumerate(zip(gate_x, t["gates"])):
+        appear = (cx - start - ok_w / 2) / ok_dist * ok_end
+        css.append(f".g{i} {{ animation: g{i} {loop}s linear infinite; }} " + fade_keyframes(f"g{i}", appear))
+        parts.append(
+            f'<text x="{cx}" y="{g_top - 26}" text-anchor="middle" class="gtitle">{escape(title)}</text>'
+            f'<text x="{cx}" y="{g_top - 8}" text-anchor="middle" class="gdetail">{escape(detail)}</text>'
+            f'<rect x="{cx - 6}" y="{g_top}" width="12" height="{g_h}" rx="6" fill="{c["border"]}"/>'
+            f'<rect class="g{i}" x="{cx - 6}" y="{g_top}" width="12" height="{g_h}" rx="6" fill="{c["green"]}"/>'
+        )
+        if i == 1:
+            parts.append(f'<rect class="flash" x="{cx - 6}" y="{g_top}" width="12" height="{g_h}" rx="6" fill="{c["red"]}"/>')
+
+    tcx = target_x + target_w / 2
+    parts.append(
+        f'<rect x="{target_x}" y="{g_top}" width="{target_w}" height="{g_h}" rx="14" fill="{c["panel"]}" stroke="{c["border"]}"/>'
+        f'<rect class="target" x="{target_x}" y="{g_top}" width="{target_w}" height="{g_h}" rx="14" fill="none" '
+        f'stroke="{c["green"]}" stroke-width="2"/>'
+        f'<text x="{tcx}" y="{g_top + 28}" text-anchor="middle" class="mono" font-size="18" font-weight="700" fill="{c["text"]}">main</text>'
+        f'<text x="{tcx}" y="{g_top + g_h - 18}" text-anchor="middle" class="gdetail">{escape(t["gates_target"])}</text>'
+    )
+
+    def packet(cls, y, width, color, label):
+        return (
+            f'<g class="{cls}"><rect x="{start}" y="{y - 15}" width="{width}" height="30" rx="15" fill="{color}" '
+            f'fill-opacity="0.14" stroke="{color}"/>'
+            f'<text x="{start + width / 2}" y="{y + 5}" text-anchor="middle" class="packet" fill="{color}">{escape(label)}</text></g>'
+        )
+
+    parts.append(packet("ok", lane_ok, ok_w, c["green"], t["gates_ok"]))
+    parts.append(packet("bad", lane_bad, bad_w, c["red"], t["gates_bad"]))
+    parts.append(
+        f'<text class="blocked mono" x="{start + bad_dist + bad_w / 2:.1f}" y="{lane_bad + 50}" text-anchor="middle" '
+        f'font-size="12" fill="{c["red"]}">{escape(t["gates_blocked"])}</text>'
+    )
+    return (
+        svg_open(w, h, t["gates_title"], t["gates_desc"])
+        + f"<style>{' '.join(css)} {REDUCED_MOTION}</style>\n"
+        + frame(w, h, c, t["gates_title"], t["gates_sub"])
+        + "\n".join(parts) + "\n</svg>\n"
+    )
+
+
+# --------------------------------------------------------------------------- roadmap
+def roadmap(lang, theme):
+    t, c = TEXTS[lang], THEMES[theme]
+    w, h = 1200, 300
+    items = t["road_items"]
+    n = len(items)
+    done = sum(1 for _, finished in items if finished)
+    upcoming = items[done][0] if done < n else "—"
+    x0, x1, y = 90, 1110, 188
+    step = (x1 - x0) / (n - 1)
+    fill_w = (done - 1) * step
+    sub = t["road_sub"].format(done=done, total=n, next=upcoming)
+
+    css = [
+        header_css(c),
+        f".label {{ font-size: 14px; fill: {c['muted']}; }}",
+        f".label.done {{ fill: {c['text']}; }} .label.next {{ fill: {c['accent']}; font-weight: 700; }}",
+        ".check { font-size: 15px; font-weight: 800; fill: #ffffff; }",
+        ".rfill { transform-box: fill-box; transform-origin: left center; animation: grow 1.4s 0.3s linear both; }",
+        "@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }",
+        ".pop { transform-box: fill-box; transform-origin: center; animation: pop 0.45s cubic-bezier(.3,1.6,.5,1) both; }",
+        "@keyframes pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }",
+        ".fade { animation: fade 0.5s ease-out both; } @keyframes fade { from { opacity: 0; } to { opacity: 1; } }",
+        f".ring {{ fill: none; stroke: {c['accent']}; stroke-width: 2; opacity: 0; transform-box: fill-box; "
+        f"transform-origin: center; animation: ring 2s 2.2s ease-out infinite; }}",
+        "@keyframes ring { 0% { transform: scale(0.9); opacity: 0.7; } 100% { transform: scale(2); opacity: 0; } }",
+    ]
+    parts = [
+        f'<rect x="{x0}" y="{y - 3}" width="{x1 - x0}" height="6" rx="3" fill="{c["border"]}"/>',
+        f'<rect class="rfill" x="{x0}" y="{y - 3}" width="{fill_w:.1f}" height="6" rx="3" fill="{c["green"]}"/>',
+    ]
+    for i, (label, finished) in enumerate(items):
+        cx = x0 + i * step
+        if finished:
+            delay = 0.3 + (i / max(done - 1, 1)) * 1.4
+            node = (f'<circle cx="{cx:.1f}" cy="{y}" r="15" fill="{c["green"]}"/>'
+                    f'<text x="{cx:.1f}" y="{y + 5}" text-anchor="middle" class="check">✓</text>')
+            kind = "done"
+        elif i == done:
+            delay = 1.9
+            node = (f'<circle class="ring" cx="{cx:.1f}" cy="{y}" r="15"/>'
+                    f'<circle cx="{cx:.1f}" cy="{y}" r="15" fill="{c["bg"]}" stroke="{c["accent"]}" stroke-width="2"/>'
+                    f'<circle cx="{cx:.1f}" cy="{y}" r="5" fill="{c["accent"]}"/>')
+            kind = "next"
+        else:
+            delay = 1.9 + (i - done) * 0.12
+            node = f'<circle cx="{cx:.1f}" cy="{y}" r="15" fill="{c["bg"]}" stroke="{c["border"]}" stroke-width="2" stroke-dasharray="4 4"/>'
+            kind = "todo"
+        ly = y - 32 if i % 2 == 0 else y + 44
+        parts.append(f'<g class="pop" style="animation-delay:{delay:.2f}s">{node}</g>')
+        parts.append(f'<text x="{cx:.1f}" y="{ly}" text-anchor="middle" class="label {kind} fade" '
+                     f'style="animation-delay:{delay:.2f}s">{escape(label)}</text>')
+
+    desc = f"{sub}. " + "; ".join(f"{label}: {'done' if f else 'planned'}" for label, f in items)
+    return (
+        svg_open(w, h, "Roadmap", desc)
+        + f"<style>{' '.join(css)} {REDUCED_MOTION}</style>\n"
+        + frame(w, h, c, "Roadmap", sub)
+        + "\n".join(parts) + "\n</svg>\n"
+    )
+
+
 def main():
     files = {"terminal-demo.svg": terminal()}
     for lang in TEXTS:
         for theme in THEMES:
             files[f"banner-{lang}-{theme}.svg"] = banner(lang, theme)
             files[f"impact-{lang}-{theme}.svg"] = impact(lang, theme)
+            files[f"flow-{lang}-{theme}.svg"] = flow(lang, theme)
+            files[f"gates-{lang}-{theme}.svg"] = gates(lang, theme)
+            files[f"roadmap-{lang}-{theme}.svg"] = roadmap(lang, theme)
     for name, content in files.items():
         (OUT / name).write_text(content, encoding="utf-8")
         print(f"generated assets/{name}")

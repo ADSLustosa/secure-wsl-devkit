@@ -70,6 +70,16 @@ O `secure-wsl-devkit` resolve os três com um único script, que pode ser execut
 
 ## 🔄 Como funciona
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/flow-pt-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/flow-pt-light.svg">
+  <img alt="Como o setup.sh funciona: seis etapas em ordem; as três primeiras sempre executam e as três últimas são puladas quando já feitas." src="assets/flow-pt-dark.svg" width="100%">
+</picture>
+
+<details>
+<summary><b>🧩 Fluxo de decisão detalhado (Mermaid)</b></summary>
+<br>
+
 ```mermaid
 flowchart TD
     A([./setup.sh]) --> B{Executando como root<br/>ou fora do WSL?}
@@ -94,6 +104,8 @@ flowchart TD
 
 Cada **losango** é uma verificação de idempotência: a etapa só é executada quando a configuração ainda não existe.
 
+</details>
+
 <details>
 <summary><b>🧰 O que é configurado</b> (clique para expandir)</summary>
 <br>
@@ -111,6 +123,12 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 </details>
 
 ## 🔐 Decisões de segurança
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/gates-pt-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/gates-pt-light.svg">
+  <img alt="Toda mudança passa por quatro portões: um commit assinado chega à branch main protegida por pull request com CI verde, enquanto um push direto é recusado." src="assets/gates-pt-dark.svg" width="100%">
+</picture>
 
 | Decisão | Justificativa |
 |---|---|
@@ -211,7 +229,7 @@ secure-wsl-devkit/
 │       └── shellcheck.yml   # CI: análise estática a cada push e pull request
 ├── assets/
 │   ├── generate.py          # Gera todos os visuais do README (só biblioteca padrão)
-│   └── *.svg                # Banner, demonstração do terminal e cards de impacto animados
+│   └── *.svg                # Banner, terminal, impacto, fluxo, portões de segurança e roadmap
 ├── setup.sh                 # Script de setup idempotente
 ├── LICENSE
 ├── README.md                # English
@@ -219,6 +237,16 @@ secure-wsl-devkit/
 ```
 
 ## 🧭 Roadmap
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-pt-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-pt-light.svg">
+  <img alt="Roadmap: 5 de 9 entregas concluídas; a próxima é validar o script em uma distribuição zerada no CI." src="assets/roadmap-pt-dark.svg" width="100%">
+</picture>
+
+<details>
+<summary><b>📝 Versão em texto</b></summary>
+<br>
 
 - ✅ Script de setup idempotente
 - ✅ Commits assinados via SSH
@@ -229,6 +257,8 @@ secure-wsl-devkit/
 - 🔜 Configuração do runtime de contêineres (integração do Docker Desktop com o WSL)
 - 🔜 Varredura de segredos antes de cada commit com Gitleaks + pre-commit
 - 🔜 Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
+
+</details>
 
 ## 📄 Licença
 
