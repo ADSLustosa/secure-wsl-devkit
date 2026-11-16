@@ -30,7 +30,7 @@ verificar_ambiente() {
 instalar_pacotes() {
   log "Atualizando o sistema e instalando pacotes base"
   sudo apt-get update
-  sudo apt-get upgrade -y
+  sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
   sudo apt-get install -y build-essential curl unzip keychain shellcheck
 }
 
