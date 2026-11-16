@@ -74,7 +74,7 @@ TEXTS = {
         "road_sub": "{done} of {total} milestones delivered · next: {next}",
         "road_items": [
             ("Idempotent setup", True), ("Signed commits", True), ("PATH allowlist", True),
-            ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", False),
+            ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", True),
             ("Container runtime", False), ("Gitleaks", False), ("Pinned actions", False),
         ],
     },
@@ -118,7 +118,7 @@ TEXTS = {
         "road_sub": "{done} de {total} entregas concluídas · próxima: {next}",
         "road_items": [
             ("Setup idempotente", True), ("Commits assinados", True), ("PATH seletivo", True),
-            ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", False),
+            ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", True),
             ("Contêineres", False), ("Gitleaks", False), ("Actions fixadas", False),
         ],
     },

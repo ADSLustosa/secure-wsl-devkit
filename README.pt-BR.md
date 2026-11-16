@@ -9,6 +9,7 @@
 <div align="center">
 
 [![ShellCheck](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml)
+[![Fresh install](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/fresh-install.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/fresh-install.yml)
 ![Último commit](https://img.shields.io/github/last-commit/ADSLustosa/secure-wsl-devkit?color=22d3ee&label=%C3%BAltimo%20commit)
 ![Plataforma](https://img.shields.io/badge/plataforma-WSL%202-0078D6?logo=windows&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-26.04%20LTS-E95420?logo=ubuntu&logoColor=white)
@@ -139,6 +140,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | **`curl -fsSL`** | O `-f` faz erros HTTP falharem, então uma página de erro nunca é executada pelo `bash`. |
 | **Variáveis com prefixo (`DEVKIT_`)** | Evita colisões com variáveis de scripts carregados via `source`, como o `nvm.sh`. |
 | **Token do CI somente leitura** | O workflow declara `permissions: contents: read`, seguindo o princípio do menor privilégio. |
+| **As guardas de segurança são testadas** | O CI prova que o script se recusa a rodar como `root` ou fora do WSL, e não só que ele funciona. |
 | **Branch `main` protegida** | Um ruleset bloqueia pushes diretos, force pushes e commits sem assinatura, e exige o CI verde antes do merge. |
 | **Nenhum segredo no repositório** | Senhas, *passphrases* e tokens ficam em um gerenciador de senhas, nunca no código. |
 
@@ -226,11 +228,14 @@ python3 assets/generate.py
 secure-wsl-devkit/
 ├── .github/
 │   └── workflows/
+│       ├── fresh-install.yml # CI: executa o setup.sh duas vezes em um Ubuntu zerado
 │       └── shellcheck.yml   # CI: análise estática a cada push e pull request
 ├── assets/
 │   ├── generate.py          # Gera todos os visuais do README (só biblioteca padrão)
 │   └── *.svg                # Banner, terminal, impacto, fluxo, portões de segurança e roadmap
 ├── setup.sh                 # Script de setup idempotente
+├── tests/
+│   └── fresh-install.sh     # Teste de integração com WSL simulado
 ├── LICENSE
 ├── README.md                # English
 └── README.pt-BR.md          # Português
@@ -241,7 +246,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-pt-light.svg">
-  <img alt="Roadmap: 5 de 9 entregas concluídas; a próxima é validar o script em uma distribuição zerada no CI." src="assets/roadmap-pt-dark.svg" width="100%">
+  <img alt="Roadmap: 6 de 9 entregas concluídas; a próxima é a configuração do runtime de contêineres." src="assets/roadmap-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -253,7 +258,7 @@ secure-wsl-devkit/
 - ✅ Liberação seletiva do PATH do Windows
 - ✅ ShellCheck no CI e branch `main` protegida
 - ✅ Visuais do README animados, acessíveis e gerados por código
-- 🔜 Validar o script em uma distribuição zerada no CI
+- ✅ Teste de integração em um Ubuntu zerado no CI, incluindo as guardas de segurança
 - 🔜 Configuração do runtime de contêineres (integração do Docker Desktop com o WSL)
 - 🔜 Varredura de segredos antes de cada commit com Gitleaks + pre-commit
 - 🔜 Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
