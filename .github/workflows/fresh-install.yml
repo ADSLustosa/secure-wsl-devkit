@@ -11,12 +11,26 @@ permissions:
 
 jobs:
   fresh-install:
-    name: Setup em Ubuntu zerado
+    name: Setup em Ubuntu ${{ matrix.ubuntu }} zerado
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ["24.04", "26.04"]
+    container:
+      image: ubuntu:${{ matrix.ubuntu }}
     steps:
+      - name: Preparar o mínimo de uma instalação nova do WSL
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo git ca-certificates
+          useradd --create-home --shell /bin/bash dev
+          echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev
+          chmod 440 /etc/sudoers.d/dev
+
       - name: Baixar o código
         uses: actions/checkout@v5
 
-      - name: Executar o teste de integração
-        run: tests/fresh-install.sh
+      - name: Executar o teste de integração como usuário comum
+        run: sudo -u dev -H env CI=true RUNNER_TEMP=/tmp ./tests/fresh-install.sh
