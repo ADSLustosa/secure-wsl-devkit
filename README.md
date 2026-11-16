@@ -9,6 +9,7 @@
 <div align="center">
 
 [![ShellCheck](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml)
+[![Fresh install](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/fresh-install.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/fresh-install.yml)
 ![Last commit](https://img.shields.io/github/last-commit/ADSLustosa/secure-wsl-devkit?color=22d3ee&label=last%20commit)
 ![Platform](https://img.shields.io/badge/platform-WSL%202-0078D6?logo=windows&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-26.04%20LTS-E95420?logo=ubuntu&logoColor=white)
@@ -139,6 +140,7 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | **`curl -fsSL`** | `-f` makes HTTP errors fail, so an error page is never piped into `bash`. |
 | **Namespaced variables (`DEVKIT_`)** | Avoids collisions with variables from sourced scripts, such as `nvm.sh`. |
 | **Read-only CI token** | The workflow declares `permissions: contents: read`, following the principle of least privilege. |
+| **Safety guards are tested** | CI proves the script refuses to run as `root` or outside WSL, not only that it works. |
 | **Protected `main` branch** | A ruleset blocks direct pushes, force pushes and unsigned commits, and requires a green CI run before merging. |
 | **No secrets in the repository** | Passwords, passphrases and tokens live in a password manager, never in code. |
 
@@ -226,11 +228,14 @@ python3 assets/generate.py
 secure-wsl-devkit/
 ├── .github/
 │   └── workflows/
+│       ├── fresh-install.yml # CI: runs setup.sh twice on a fresh Ubuntu
 │       └── shellcheck.yml   # CI: static analysis on every push and pull request
 ├── assets/
 │   ├── generate.py          # Generates every README visual (stdlib only)
 │   └── *.svg                # Banner, terminal, impact, flow, security gates and roadmap
 ├── setup.sh                 # Idempotent setup script
+├── tests/
+│   └── fresh-install.sh     # Integration test with a simulated WSL
 ├── LICENSE
 ├── README.md                # English
 └── README.pt-BR.md          # Português
@@ -241,7 +246,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-en-light.svg">
-  <img alt="Roadmap: 5 of 9 milestones delivered; next is validating the script on a fresh distribution in CI." src="assets/roadmap-en-dark.svg" width="100%">
+  <img alt="Roadmap: 6 of 9 milestones delivered; next is the container runtime setup." src="assets/roadmap-en-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -253,7 +258,7 @@ secure-wsl-devkit/
 - ✅ Windows PATH allowlist
 - ✅ ShellCheck in CI and protected `main` branch
 - ✅ Animated, accessible README visuals generated from code
-- 🔜 Validate the script on a fresh distribution in CI
+- ✅ Integration test on a fresh Ubuntu in CI, including the safety guards
 - 🔜 Container runtime setup (Docker Desktop WSL integration)
 - 🔜 Secret scanning before every commit with Gitleaks + pre-commit
 - 🔜 Pin GitHub Actions by commit SHA, kept up to date by Dependabot
