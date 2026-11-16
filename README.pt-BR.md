@@ -13,7 +13,7 @@ Um script. O mesmo ambiente em todas as máquinas. Nenhum vazamento entre Window
 ![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?logo=conventionalcommits&logoColor=white)
 [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
 
-🇺🇸 [English](README.md) · 🇧🇷 Português
+🌐 [English](README.md) · **Português**
 
 </div>
 
@@ -163,14 +163,14 @@ secure-wsl-devkit/
 
 ## 🗺️ Roadmap
 
-- [x] Script de setup idempotente
-- [x] Commits assinados via SSH
-- [x] Liberação seletiva do PATH do Windows
-- [x] ShellCheck no CI
-- [ ] Validar o script em uma distribuição zerada no CI
-- [ ] Configuração do runtime de contêineres (integração do Docker Desktop com o WSL)
-- [ ] Varredura de segredos antes de cada commit com Gitleaks + pre-commit
-- [ ] Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
+- ✅ Script de setup idempotente
+- ✅ Commits assinados via SSH
+- ✅ Liberação seletiva do PATH do Windows
+- ✅ ShellCheck no CI
+- 🔜 Validar o script em uma distribuição zerada no CI
+- 🔜 Configuração do runtime de contêineres (integração do Docker Desktop com o WSL)
+- 🔜 Varredura de segredos antes de cada commit com Gitleaks + pre-commit
+- 🔜 Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
 
 ## 📄 Licença
 

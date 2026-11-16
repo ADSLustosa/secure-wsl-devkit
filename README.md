@@ -13,7 +13,7 @@ One script. Same environment on every machine. No leaks between Windows and Linu
 ![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?logo=conventionalcommits&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-🇺🇸 English · 🇧🇷 [Português](README.pt-BR.md)
+🌐 **English** · [Português](README.pt-BR.md)
 
 </div>
 
@@ -163,14 +163,14 @@ secure-wsl-devkit/
 
 ## 🗺️ Roadmap
 
-- [x] Idempotent setup script
-- [x] Signed commits via SSH
-- [x] Windows PATH allowlist
-- [x] ShellCheck in CI
-- [ ] Validate the script on a fresh distribution in CI
-- [ ] Container runtime setup (Docker Desktop WSL integration)
-- [ ] Secret scanning before every commit with Gitleaks + pre-commit
-- [ ] Pin GitHub Actions by commit SHA, kept up to date by Dependabot
+- ✅ Idempotent setup script
+- ✅ Signed commits via SSH
+- ✅ Windows PATH allowlist
+- ✅ ShellCheck in CI
+- 🔜 Validate the script on a fresh distribution in CI
+- 🔜 Container runtime setup (Docker Desktop WSL integration)
+- 🔜 Secret scanning before every commit with Gitleaks + pre-commit
+- 🔜 Pin GitHub Actions by commit SHA, kept up to date by Dependabot
 
 ## 📄 License
 
