@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+<title id="title">Impacto medido</title>
+<desc id="desc">Antes e depois: as pastas do Windows no PATH do Linux caíram de 32 para 2, os programas do Windows que sobrepunham os do Linux caíram de 3 para 0, e os commits assinados foram de 0% para 100%.</desc>
+<style>
+text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif; }
+.title { font-size: 26px; font-weight: 800; fill: #e6edf3; }
+.sub { font-size: 15px; fill: #8b949e; }
+.before { font-size: 26px; fill: #8b949e; text-decoration: line-through; }
+.arrow { font-size: 22px; fill: #8b949e; }
+.after { font-size: 46px; font-weight: 800; }
+.label { font-size: 16px; font-weight: 600; fill: #e6edf3; }
+.detail { font-family: ui-monospace, SFMono-Regular, 'Cascadia Code', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; fill: #8b949e; }
+.fill { transform-box: fill-box; transform-origin: left center; }
+.fade { animation: fadeUp 0.6s ease-out both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+#f0 { transform: scaleX(0.0625); animation: f0 1.6s 0.70s cubic-bezier(.2,.8,.2,1) both; } @keyframes f0 { from { transform: scaleX(1.0000); } to { transform: scaleX(0.0625); } } #f1 { transform: scaleX(0.0000); animation: f1 1.6s 0.95s cubic-bezier(.2,.8,.2,1) both; } @keyframes f1 { from { transform: scaleX(1.0000); } to { transform: scaleX(0.0000); } } #f2 { transform: scaleX(1.0000); animation: f2 1.6s 1.20s cubic-bezier(.2,.8,.2,1) both; } @keyframes f2 { from { transform: scaleX(0.0000); } to { transform: scaleX(1.0000); } }</style>
+<rect x="0.5" y="0.5" width="1199" height="299" rx="16" fill="#0d1117" stroke="#30363d"/>
+<text x="32" y="54" class="title">Impacto medido</text>
+<text x="32" y="82" class="sub">Números reais do diagnóstico da máquina do autor, antes e depois do setup.sh</text>
+<g class="fade" style="animation-delay:0.40s"><rect x="32" y="108" width="362" height="168" rx="14" fill="#161b22" stroke="#30363d"/><text x="56" y="170"><tspan class="before">32</tspan><tspan class="arrow" dx="12">→</tspan><tspan class="after" dx="12" fill="#22d3ee">2</tspan></text><text x="56" y="206" class="label">Pastas do Windows no PATH do Linux</text><text x="56" y="230" class="detail">restam só o VS Code e o C:\Windows</text><rect x="56" y="248" width="314" height="8" rx="4" fill="#30363d"/><rect id="f0" class="fill" x="56" y="248" width="314" height="8" rx="4" fill="#22d3ee"/></g>
+<g class="fade" style="animation-delay:0.65s"><rect x="418" y="108" width="362" height="168" rx="14" fill="#161b22" stroke="#30363d"/><text x="442" y="170"><tspan class="before">3</tspan><tspan class="arrow" dx="12">→</tspan><tspan class="after" dx="12" fill="#22d3ee">0</tspan></text><text x="442" y="206" class="label">Binários do Windows sobrepondo o Linux</text><text x="442" y="230" class="detail">npm · npx · docker</text><rect x="442" y="248" width="314" height="8" rx="4" fill="#30363d"/><rect id="f1" class="fill" x="442" y="248" width="314" height="8" rx="4" fill="#22d3ee"/></g>
+<g class="fade" style="animation-delay:0.90s"><rect x="804" y="108" width="362" height="168" rx="14" fill="#161b22" stroke="#30363d"/><text x="828" y="170"><tspan class="before">0%</tspan><tspan class="arrow" dx="12">→</tspan><tspan class="after" dx="12" fill="#3fb950">100%</tspan></text><text x="828" y="206" class="label">Commits assinados e verificados</text><text x="828" y="230" class="detail">assinatura SSH · selo Verified</text><rect x="828" y="248" width="314" height="8" rx="4" fill="#30363d"/><rect id="f2" class="fill" x="828" y="248" width="314" height="8" rx="4" fill="#3fb950"/></g>
+</svg>
