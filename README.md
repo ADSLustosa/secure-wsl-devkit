@@ -1,12 +1,15 @@
+<a name="readme-top"></a>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-en-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/banner-en-light.svg">
+  <img alt="secure-wsl-devkit — automated, idempotent and security-first WSL 2 setup" src="assets/banner-en-dark.svg" width="100%">
+</picture>
+
 <div align="center">
 
-# 🛡️ secure-wsl-devkit
-
-**Automated, idempotent and security-first setup for a WSL 2 development environment.**
-
-One script. Same environment on every machine. No leaks between Windows and Linux.
-
 [![ShellCheck](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml)
+![Last commit](https://img.shields.io/github/last-commit/ADSLustosa/secure-wsl-devkit?color=22d3ee&label=last%20commit)
 ![Platform](https://img.shields.io/badge/platform-WSL%202-0078D6?logo=windows&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-26.04%20LTS-E95420?logo=ubuntu&logoColor=white)
 ![Bash](https://img.shields.io/badge/Bash-script-4EAA25?logo=gnubash&logoColor=white)
@@ -14,6 +17,8 @@ One script. Same environment on every machine. No leaks between Windows and Linu
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 🌐 **English** · [Português](README.pt-BR.md)
+
+**[Why](#-why-this-exists)** · **[Demo](#-see-it-in-action)** · **[Impact](#-measured-impact)** · **[How it works](#-how-it-works)** · **[Security](#-security-decisions)** · **[Quick start](#-quick-start)** · **[Roadmap](#-roadmap)**
 
 </div>
 
@@ -31,16 +36,39 @@ Setting up WSL 2 by hand on more than one computer leads to three silent problem
 
 `secure-wsl-devkit` solves all three with a single script that can be safely run as many times as needed.
 
+## 🎬 See it in action
+
+<img src="assets/terminal-demo.svg" width="100%" alt="Animated terminal: a second run of setup.sh detects that every step is already configured and changes nothing; grep then confirms the wsl.conf setting appears exactly once.">
+
+<sub>A second run on an already configured machine: each step detects the existing configuration and nothing is duplicated. The script output is in Portuguese.</sub>
+
+## 📊 Measured impact
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/impact-en-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/impact-en-light.svg">
+  <img alt="Before and after: Windows folders in the Linux PATH went from 32 to 2, Windows binaries shadowing Linux tools went from 3 to 0, and signed commits went from 0% to 100%." src="assets/impact-en-dark.svg" width="100%">
+</picture>
+
+> [!NOTE]
+> These numbers come from the read-only diagnostic run on the author's machine before and after `setup.sh`, not from estimates.
+
 ## ✨ Highlights
 
-- 🔁 **Idempotent** — running it twice produces the same result as running it once. Nothing is duplicated.
-- 🔐 **Least privilege PATH** — instead of importing dozens of Windows directories, only **2** are explicitly allowed.
-- ✍️ **Signed commits** — Git is configured to sign every commit with SSH, showing the **Verified** badge on GitHub.
-- 🛑 **Fail fast** — `set -euo pipefail` stops execution on the first unexpected error.
-- 🧪 **Explicit verification** — the script checks results instead of trusting the absence of errors.
-- 🤖 **Continuous Integration** — every pull request is statically analyzed by ShellCheck.
+<table>
+  <tr>
+    <td width="33%" valign="top">🔁 <b>Idempotent</b><br><sub>Running it twice produces the same result as running it once. Nothing is duplicated.</sub></td>
+    <td width="33%" valign="top">🔐 <b>Least privilege PATH</b><br><sub>Instead of importing dozens of Windows directories, only <b>2</b> are explicitly allowed.</sub></td>
+    <td width="33%" valign="top">✍️ <b>Signed commits</b><br><sub>Every commit is signed with SSH and shows the <b>Verified</b> badge on GitHub.</sub></td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">🛑 <b>Fail fast</b><br><sub><code>set -euo pipefail</code> stops execution on the first unexpected error.</sub></td>
+    <td width="33%" valign="top">🧪 <b>Explicit verification</b><br><sub>The script checks results instead of trusting the absence of errors.</sub></td>
+    <td width="33%" valign="top">🤖 <b>Protected main branch</b><br><sub>Changes only land through pull requests with signed commits and a green ShellCheck run.</sub></td>
+  </tr>
+</table>
 
-## ⚙️ How it works
+## 🔄 How it works
 
 ```mermaid
 flowchart TD
@@ -66,7 +94,9 @@ flowchart TD
 
 Each **diamond** is an idempotency check: the step only runs when the configuration is missing.
 
-## 🧰 What it configures
+<details>
+<summary><b>🧰 What it configures</b> (click to expand)</summary>
+<br>
 
 | Step | What it does | Why |
 |---|---|---|
@@ -77,6 +107,8 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | `wsl.conf` | `appendWindowsPath = false` | Stops the Windows PATH from leaking into Linux |
 | PATH allowlist | Only VS Code and `C:\Windows` | Keeps `code .` and `explorer.exe .` working, nothing else |
 | Node.js | `nvm` + latest LTS | Per-project Node versions without `sudo` |
+
+</details>
 
 ## 🔐 Security decisions
 
@@ -89,15 +121,12 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | **`curl -fsSL`** | `-f` makes HTTP errors fail, so an error page is never piped into `bash`. |
 | **Namespaced variables (`DEVKIT_`)** | Avoids collisions with variables from sourced scripts, such as `nvm.sh`. |
 | **Read-only CI token** | The workflow declares `permissions: contents: read`, following the principle of least privilege. |
+| **Protected `main` branch** | A ruleset blocks direct pushes, force pushes and unsigned commits, and requires a green CI run before merging. |
 | **No secrets in the repository** | Passwords, passphrases and tokens live in a password manager, never in code. |
 
 ## 🚀 Quick start
 
-### Requirements
-
-- Windows 10/11 with **WSL 2**
-- An **Ubuntu** distribution (tested on 26.04 LTS)
-- **VS Code** installed on Windows
+**Requirements:** Windows 10/11 with **WSL 2**, an **Ubuntu** distribution (tested on 26.04 LTS) and **VS Code** installed on Windows.
 
 ### 1. Clone and run
 
@@ -110,9 +139,13 @@ cd secure-wsl-devkit
 ./setup.sh
 ```
 
-> ⚠️ Do not run it with `sudo`. The script asks for your password only when it needs it.
+> [!WARNING]
+> Do not run it with `sudo`. The script asks for your password only when it needs it, and running it as `root` would configure the wrong user.
 
 ### 2. Manual steps (intentional)
+
+> [!IMPORTANT]
+> These steps are manual **by design**: private keys and trust decisions should never be automated.
 
 ```bash
 # Generate a key unique to this machine
@@ -123,15 +156,16 @@ cat ~/.ssh/id_ed25519.pub
 ```
 
 1. On GitHub, go to **Settings → SSH and GPG keys** and add the key **twice**: as an *Authentication Key* and as a *Signing Key*.
-2. Run `ssh -T git@github.com` and compare the fingerprint with the [official GitHub fingerprints](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints). You can paste the official value as the answer and SSH compares it for you.
+2. Run `ssh -T git@github.com` and compare the fingerprint with the [official GitHub fingerprints](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints).
 3. Run `./setup.sh` again to enable commit signing.
-4. In **PowerShell**, restart only this distribution to apply `wsl.conf`:
+4. In **PowerShell**, restart only this distribution to apply `wsl.conf`: `wsl --terminate Ubuntu-26.04`
 
-```powershell
-wsl --terminate Ubuntu-26.04
-```
+> [!TIP]
+> When SSH asks whether to trust the host, paste the official fingerprint as the answer instead of typing `yes`. SSH compares the values for you and removes human error.
 
-## ✅ Verifying the result
+<details>
+<summary><b>✅ Verifying the result</b> (click to expand)</summary>
+<br>
 
 ```bash
 # Only VS Code and C:\Windows should come from /mnt/c
@@ -148,6 +182,26 @@ grep -c "Caminhos do Windows liberados" ~/.bashrc
 git log --show-signature -1
 ```
 
+</details>
+
+<details>
+<summary><b>🎨 About the visuals</b> (click to expand)</summary>
+<br>
+
+Every image in this README is an animated SVG **generated from code** by [`assets/generate.py`](assets/generate.py), using only the Python standard library:
+
+- **No external services or trackers:** nothing is loaded from third-party servers.
+- **Light and dark themes:** `<picture>` serves the version that matches the reader's GitHub theme.
+- **Accessible:** each SVG has a `<title>` and `<desc>` for screen readers, and readers with *reduced motion* enabled see the complete, static final frame.
+
+To regenerate them after a change:
+
+```bash
+python3 assets/generate.py
+```
+
+</details>
+
 ## 📁 Project structure
 
 ```
@@ -155,18 +209,22 @@ secure-wsl-devkit/
 ├── .github/
 │   └── workflows/
 │       └── shellcheck.yml   # CI: static analysis on every push and pull request
+├── assets/
+│   ├── generate.py          # Generates every README visual (stdlib only)
+│   └── *.svg                # Animated banner, terminal demo and impact cards
 ├── setup.sh                 # Idempotent setup script
 ├── LICENSE
 ├── README.md                # English
 └── README.pt-BR.md          # Português
 ```
 
-## 🗺️ Roadmap
+## 🧭 Roadmap
 
 - ✅ Idempotent setup script
 - ✅ Signed commits via SSH
 - ✅ Windows PATH allowlist
-- ✅ ShellCheck in CI
+- ✅ ShellCheck in CI and protected `main` branch
+- ✅ Animated, accessible README visuals generated from code
 - 🔜 Validate the script on a fresh distribution in CI
 - 🔜 Container runtime setup (Docker Desktop WSL integration)
 - 🔜 Secret scanning before every commit with Gitleaks + pre-commit
@@ -181,5 +239,7 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 <div align="center">
 
 Built by **[ADSLustosa](https://github.com/ADSLustosa)** · Full-stack developer focused on security and data protection (LGPD)
+
+<sub>[↑ Back to top](#readme-top)</sub>
 
 </div>
