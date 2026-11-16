@@ -1,0 +1,22 @@
+name: Fresh install
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fresh-install:
+    name: Setup em Ubuntu zerado
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v5
+
+      - name: Executar o teste de integração
+        run: tests/fresh-install.sh
