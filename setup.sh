@@ -42,6 +42,8 @@ configurar_git() {
   git config --global pull.rebase true
   git config --global core.autocrlf input
   git config --global core.editor "code --wait"
+  git config --global fetch.prune true
+
 
   if [[ -f "$HOME/.ssh/id_ed25519.pub" ]]; then
     git config --global gpg.format ssh
