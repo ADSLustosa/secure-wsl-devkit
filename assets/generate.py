@@ -49,13 +49,14 @@ TEXTS = {
         ],
         "flow_title": "How setup.sh works",
         "flow_sub": "Every step either runs or detects the existing configuration, so it is safe to repeat",
-        "flow_desc": "Seven steps run in order: check environment, base packages, Git and signing, cut the Windows PATH, "
-                     "PATH allowlist, Node.js LTS and Docker check. The first three always run, the next three are skipped "
-                     "when already done, and the Docker step only checks and warns.",
+        "flow_desc": "Eight steps run in order: check environment, base packages, Git and signing, pre-commit template, "
+                     "cut the Windows PATH, PATH allowlist, Node.js LTS and Docker check. The first four always run, the next "
+                     "three are skipped when already done, and the Docker step only checks and warns.",
         "flow_steps": [
             ("Environment", "root? WSL 2?", "always"),
             ("Base packages", "apt-get", "always"),
             ("Git + signing", "git config", "always"),
+            ("pre-commit", "templateDir", "always"),
             ("Cut Win PATH", "/etc/wsl.conf", "skip"),
             ("PATH allowlist", "~/.bashrc", "skip"),
             ("Node.js LTS", "nvm", "skip"),
@@ -66,10 +67,10 @@ TEXTS = {
         "flow_check": "checks, warns",
         "gates_title": "Every change passes four gates",
         "gates_sub": "A signed commit reaches main only through a pull request with a green CI; a direct push is rejected",
-        "gates_desc": "A signed commit passes four gates (signed commit, pull request only, ShellCheck CI and verified "
-                      "commits only) and reaches the protected main branch. A direct push is rejected at the pull request gate.",
+        "gates_desc": "A signed commit passes four gates (signed commit, pull request only, CI with ShellCheck and Gitleaks, "
+                      "and verified commits only) and reaches the protected main branch. A direct push is rejected at the pull request gate.",
         "gates": [("Signed commit", "ssh-ed25519"), ("Pull request only", "ruleset"),
-                  ("ShellCheck CI", "github actions"), ("Verified only", "ruleset")],
+                  ("CI checks", "shellcheck · gitleaks"), ("Verified only", "ruleset")],
         "gates_ok": "✓ commit",
         "gates_bad": "✕ direct push",
         "gates_blocked": "rejected: changes must go through a pull request",
@@ -78,7 +79,7 @@ TEXTS = {
         "road_items": [
             ("Idempotent setup", True), ("Signed commits", True), ("PATH allowlist", True),
             ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", True),
-            ("Container runtime", True), ("Gitleaks", False), ("Pinned actions", False),
+            ("Container runtime", True), ("Gitleaks", True), ("Pinned actions", False),
         ],
     },
     "pt": {
@@ -96,13 +97,14 @@ TEXTS = {
         ],
         "flow_title": "Como o setup.sh funciona",
         "flow_sub": "Cada etapa executa ou detecta a configuração existente, por isso é seguro repetir",
-        "flow_desc": "Sete etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, corte do PATH do Windows, "
-                     "liberação do VS Code, Node.js LTS e verificação do Docker. As três primeiras sempre executam, as três "
-                     "seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa.",
+        "flow_desc": "Oito etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, template do pre-commit, "
+                     "corte do PATH do Windows, liberação do VS Code, Node.js LTS e verificação do Docker. As quatro primeiras "
+                     "sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa.",
         "flow_steps": [
             ("Ambiente", "root? WSL 2?", "always"),
             ("Pacotes base", "apt-get", "always"),
             ("Git + assinat.", "git config", "always"),
+            ("pre-commit", "templateDir", "always"),
             ("Corta PATH Win", "/etc/wsl.conf", "skip"),
             ("Libera VS Code", "~/.bashrc", "skip"),
             ("Node.js LTS", "nvm", "skip"),
@@ -110,13 +112,13 @@ TEXTS = {
         ],
         "flow_always": "roda sempre",
         "flow_skip": "pula se pronto",
-        "flow_check": "verifica, avisa",
+        "flow_check": "só verifica",
         "gates_title": "Toda mudança passa por quatro portões",
         "gates_sub": "Um commit assinado só chega à main por pull request com CI verde; um push direto é recusado",
         "gates_desc": "Um commit assinado passa por quatro portões (commit assinado, somente pull request, CI com ShellCheck e "
-                      "somente commits verificados) e chega à branch main protegida. Um push direto é recusado no portão do pull request.",
+                      "Gitleaks, e somente commits verificados) e chega à branch main protegida. Um push direto é recusado no portão do pull request.",
         "gates": [("Commit assinado", "ssh-ed25519"), ("Só via PR", "ruleset"),
-                  ("CI ShellCheck", "github actions"), ("Só verificados", "ruleset")],
+                  ("Checks do CI", "shellcheck · gitleaks"), ("Só verificados", "ruleset")],
         "gates_ok": "✓ commit",
         "gates_bad": "✕ push direto",
         "gates_blocked": "recusado: mudanças só entram por pull request",
@@ -125,7 +127,7 @@ TEXTS = {
         "road_items": [
             ("Setup idempotente", True), ("Commits assinados", True), ("PATH seletivo", True),
             ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", True),
-            ("Contêineres", True), ("Gitleaks", False), ("Actions fixadas", False),
+            ("Contêineres", True), ("Gitleaks", True), ("Actions fixadas", False),
         ],
     },
 }
@@ -391,7 +393,7 @@ def flow(lang, theme):
     t, c = TEXTS[lang], THEMES[theme]
     w, h = 1200, 300
     steps = t["flow_steps"]
-    n, left, gap, top, card_h = len(steps), 32, 20, 104, 132
+    n, left, gap, top, card_h = len(steps), 32, 14, 104, 132
     card_w = (w - 2 * left - gap * (n - 1)) / n
     loop, travel = 7.5, 75  # loop length in seconds; % of the loop spent travelling
     track_y = top + card_h + 32
@@ -403,7 +405,7 @@ def flow(lang, theme):
         f".step {{ font-size: 14px; font-weight: 700; fill: {c['text']}; }}",
         f".detail {{ font-family: {MONO}; font-size: 12px; fill: {c['muted']}; }}",
         f".num {{ font-size: 13px; font-weight: 700; fill: {c['text']}; }}",
-        f".pill {{ font-family: {MONO}; font-size: 11px; }}",
+        f".pill {{ font-family: {MONO}; font-size: 10.5px; }}",
         f".track {{ transform-box: fill-box; transform-origin: left center; transform: scaleX(1); "
         f"animation: track {loop}s linear infinite; }}",
         f"@keyframes track {{ 0% {{ transform: scaleX(0); opacity: 1; }} {travel}% {{ transform: scaleX(1); }} "

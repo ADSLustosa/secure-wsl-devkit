@@ -10,6 +10,7 @@
 
 [![ShellCheck](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/shellcheck.yml)
 [![Fresh install](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/fresh-install.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/fresh-install.yml)
+[![Gitleaks](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/ADSLustosa/secure-wsl-devkit/actions/workflows/gitleaks.yml)
 ![Último commit](https://img.shields.io/github/last-commit/ADSLustosa/secure-wsl-devkit?color=22d3ee&label=%C3%BAltimo%20commit)
 ![Plataforma](https://img.shields.io/badge/plataforma-WSL%202-0078D6?logo=windows&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-26.04%20LTS-E95420?logo=ubuntu&logoColor=white)
@@ -65,7 +66,7 @@ O `secure-wsl-devkit` resolve os três com um único script, que pode ser execut
   <tr>
     <td width="33%" valign="top">🛑 <b>Fail fast</b><br><sub><code>set -euo pipefail</code> interrompe a execução no primeiro erro inesperado.</sub></td>
     <td width="33%" valign="top">🧪 <b>Verificação explícita</b><br><sub>O script confere os resultados em vez de confiar apenas na ausência de erros.</sub></td>
-    <td width="33%" valign="top">🤖 <b>Branch main protegida</b><br><sub>Mudanças só entram por pull request, com commits assinados e o ShellCheck verde.</sub></td>
+    <td width="33%" valign="top">🤖 <b>Branch main protegida</b><br><sub>Mudanças só entram por pull request, com commits assinados, ShellCheck verde e nenhum segredo encontrado pelo Gitleaks.</sub></td>
   </tr>
 </table>
 
@@ -74,7 +75,7 @@ O `secure-wsl-devkit` resolve os três com um único script, que pode ser execut
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/flow-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/flow-pt-light.svg">
-  <img alt="Como o setup.sh funciona: sete etapas em ordem; as três primeiras sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa." src="assets/flow-pt-dark.svg" width="100%">
+  <img alt="Como o setup.sh funciona: oito etapas em ordem; as quatro primeiras sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa." src="assets/flow-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -90,8 +91,9 @@ flowchart TD
     D --> E{Chave SSH existe?}
     E -- sim --> F[Ativa a assinatura de commits]
     E -- não --> G[Adia a assinatura para a próxima execução]
-    F --> H{wsl.conf já configurado?}
-    G --> H
+    F --> P[Ativa o pre-commit em repositórios novos]
+    G --> P
+    P --> H{wsl.conf já configurado?}
     H -- não --> I[Desliga a importação do PATH do Windows]
     H -- sim --> J
     I --> J{Liberação do PATH já está no .bashrc?}
@@ -118,6 +120,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | Verificação do ambiente | Bloqueia a execução como `root` e fora do WSL | Evita configurar o usuário ou o sistema errado |
 | Pacotes base | `build-essential`, `curl`, `unzip`, `keychain`, `shellcheck` | Compiladores para módulos nativos do Node, agente SSH e análise de scripts |
 | Git | Identidade, `main` como branch padrão, `pull.rebase`, `autocrlf input`, `fetch.prune` | Histórico linear, quebras de linha no padrão Linux e lista de branches sempre limpa |
+| pre-commit | `init.templateDir` com o hook do pre-commit | Todo clone novo com `.pre-commit-config.yaml` já recebe os hooks |
 | Assinatura de commits | `gpg.format ssh`, chave de assinatura e `allowed_signers` | Prova criptográfica de autoria |
 | `wsl.conf` | `appendWindowsPath = false` | Impede que o PATH do Windows vaze para o Linux |
 | Liberação do PATH | Apenas o VS Code e o `C:\Windows` | Mantém o `code .` e o `explorer.exe .` funcionando, e nada além disso |
@@ -145,6 +148,8 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | **Token do CI somente leitura** | O workflow declara `permissions: contents: read`, seguindo o princípio do menor privilégio. |
 | **As guardas de segurança são testadas** | O CI prova que o script se recusa a rodar como `root` ou fora do WSL, e não só que ele funciona. |
 | **Branch `main` protegida** | Um ruleset bloqueia pushes diretos, force pushes e commits sem assinatura, e exige o CI verde antes do merge. |
+| **Varredura de segredos em três camadas** | Um hook do Gitleaks bloqueia o commit, um job no CI varre todo o histórico e o push protection do GitHub é a última barreira. Os achados são sempre mascarados. |
+| **Ferramentas fixadas por referências imutáveis** | O hook do Gitleaks é fixado pelo SHA do commit, e o binário do CI é conferido contra um checksum guardado neste repositório. |
 | **Verificação de exposição do Docker** | Alerta quando o `DOCKER_HOST` aponta para TCP sem TLS: controlar o Docker equivale a ter acesso de root. |
 | **Nenhum segredo no repositório** | Senhas, *passphrases* e tokens ficam em um gerenciador de senhas, nunca no código. |
 
@@ -183,6 +188,7 @@ cat ~/.ssh/id_ed25519.pub
 2. Rode `ssh -T git@github.com` e compare a fingerprint com as [fingerprints oficiais do GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints).
 3. Execute `./setup.sh` novamente para ativar a assinatura de commits.
 4. No **PowerShell**, reinicie apenas esta distribuição para aplicar o `wsl.conf`: `wsl --terminate Ubuntu-26.04`
+5. Este repositório foi clonado antes do setup, então ative os hooks dele uma vez: `pre-commit install`
 
 > [!TIP]
 > Quando o SSH perguntar se você confia no servidor, cole a fingerprint oficial como resposta em vez de digitar `yes`. O SSH compara os valores por você e elimina o erro humano.
@@ -233,10 +239,12 @@ secure-wsl-devkit/
 ├── .github/
 │   └── workflows/
 │       ├── fresh-install.yml # CI: executa o setup.sh duas vezes em um Ubuntu zerado
+│       ├── gitleaks.yml     # CI: varre todo o histórico em busca de segredos
 │       └── shellcheck.yml   # CI: análise estática a cada push e pull request
 ├── assets/
 │   ├── generate.py          # Gera todos os visuais do README (só biblioteca padrão)
 │   └── *.svg                # Banner, terminal, impacto, fluxo, portões de segurança e roadmap
+├── .pre-commit-config.yaml  # Gitleaks e ShellCheck antes de cada commit
 ├── setup.sh                 # Script de setup idempotente
 ├── tests/
 │   └── fresh-install.sh     # Teste de integração com WSL simulado
@@ -250,7 +258,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-pt-light.svg">
-  <img alt="Roadmap: 7 de 9 entregas concluídas; a próxima é a varredura de segredos com o Gitleaks." src="assets/roadmap-pt-dark.svg" width="100%">
+  <img alt="Roadmap: 8 de 9 entregas concluídas; a próxima é fixar as GitHub Actions pelo SHA do commit." src="assets/roadmap-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -264,7 +272,7 @@ secure-wsl-devkit/
 - ✅ Visuais do README animados, acessíveis e gerados por código
 - ✅ Teste de integração em um Ubuntu zerado no CI, incluindo as guardas de segurança
 - ✅ Verificação da integração do Docker Desktop com o WSL, testada com *test doubles*
-- 🔜 Varredura de segredos antes de cada commit com Gitleaks + pre-commit
+- ✅ Varredura de segredos com o Gitleaks: hook no pre-commit, varredura do histórico no CI e teste de ponta a ponta
 - 🔜 Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
 
 </details>
