@@ -74,7 +74,7 @@ O `secure-wsl-devkit` resolve os três com um único script, que pode ser execut
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/flow-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/flow-pt-light.svg">
-  <img alt="Como o setup.sh funciona: seis etapas em ordem; as três primeiras sempre executam e as três últimas são puladas quando já feitas." src="assets/flow-pt-dark.svg" width="100%">
+  <img alt="Como o setup.sh funciona: sete etapas em ordem; as três primeiras sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa." src="assets/flow-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -98,9 +98,11 @@ flowchart TD
     J -- não --> K[Libera apenas o VS Code e o C:\Windows]
     J -- sim --> L
     K --> L[Instala o nvm + Node.js LTS]
-    L --> M{node disponível?}
+    L --> M{node vem do nvm?}
     M -- não --> X
-    M -- sim --> N([✅ Exibe os passos manuais])
+    M -- sim --> D{Docker pronto?}
+    D -- sim --> N([✅ Exibe os passos manuais])
+    D -- não --> W[⚠️ Orienta como ativar] --> N
 ```
 
 Cada **losango** é uma verificação de idempotência: a etapa só é executada quando a configuração ainda não existe.
@@ -120,6 +122,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | `wsl.conf` | `appendWindowsPath = false` | Impede que o PATH do Windows vaze para o Linux |
 | Liberação do PATH | Apenas o VS Code e o `C:\Windows` | Mantém o `code .` e o `explorer.exe .` funcionando, e nada além disso |
 | Node.js | `nvm` + versão LTS mais recente | Versões de Node por projeto, sem `sudo` |
+| Docker | Verifica a integração do Docker Desktop com o WSL | Orienta a correção exata em vez de interromper todo o setup |
 
 </details>
 
@@ -142,6 +145,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | **Token do CI somente leitura** | O workflow declara `permissions: contents: read`, seguindo o princípio do menor privilégio. |
 | **As guardas de segurança são testadas** | O CI prova que o script se recusa a rodar como `root` ou fora do WSL, e não só que ele funciona. |
 | **Branch `main` protegida** | Um ruleset bloqueia pushes diretos, force pushes e commits sem assinatura, e exige o CI verde antes do merge. |
+| **Verificação de exposição do Docker** | Alerta quando o `DOCKER_HOST` aponta para TCP sem TLS: controlar o Docker equivale a ter acesso de root. |
 | **Nenhum segredo no repositório** | Senhas, *passphrases* e tokens ficam em um gerenciador de senhas, nunca no código. |
 
 ## 🚀 Como usar
@@ -246,7 +250,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-pt-light.svg">
-  <img alt="Roadmap: 6 de 9 entregas concluídas; a próxima é a configuração do runtime de contêineres." src="assets/roadmap-pt-dark.svg" width="100%">
+  <img alt="Roadmap: 7 de 9 entregas concluídas; a próxima é a varredura de segredos com o Gitleaks." src="assets/roadmap-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -259,7 +263,7 @@ secure-wsl-devkit/
 - ✅ ShellCheck no CI e branch `main` protegida
 - ✅ Visuais do README animados, acessíveis e gerados por código
 - ✅ Teste de integração em um Ubuntu zerado no CI, incluindo as guardas de segurança
-- 🔜 Configuração do runtime de contêineres (integração do Docker Desktop com o WSL)
+- ✅ Verificação da integração do Docker Desktop com o WSL, testada com *test doubles*
 - 🔜 Varredura de segredos antes de cada commit com Gitleaks + pre-commit
 - 🔜 Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
 
