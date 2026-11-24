@@ -78,9 +78,7 @@ Setting up WSL 2 by hand on more than one computer leads to three silent problem
   <img alt="How setup.sh works: eight steps run in order; the first four always run, the next three are skipped when already done, and the Docker step only checks and warns." src="assets/flow-en-dark.svg" width="100%">
 </picture>
 
-<details>
-<summary><b>🧩 Detailed decision flow (Mermaid)</b></summary>
-<br>
+### 🧩 Decision flow
 
 ```mermaid
 flowchart TD
@@ -102,14 +100,12 @@ flowchart TD
     K --> L[Install nvm + Node.js LTS]
     L --> M{node from nvm?}
     M -- no --> X
-    M -- yes --> D{Docker ready?}
-    D -- yes --> N([✅ Print manual steps])
-    D -- no --> W[⚠️ Warn how to enable it] --> N
+    M -- yes --> DK{Docker ready?}
+    DK -- yes --> N([✅ Print manual steps])
+    DK -- no --> W[⚠️ Warn how to enable it] --> N
 ```
 
 Each **diamond** is an idempotency check: the step only runs when the configuration is missing.
-
-</details>
 
 <details>
 <summary><b>🧰 What it configures</b> (click to expand)</summary>
