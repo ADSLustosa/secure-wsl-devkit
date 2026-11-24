@@ -17,6 +17,7 @@ DEVKIT_PROC_VERSION="${DEVKIT_PROC_VERSION:-/proc/version}"
 # ===== Funções auxiliares =====
 log() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 erro() { printf '\033[1;31mERRO: %s\033[0m\n' "$*" >&2; }
+aviso() { printf '\033[1;33mAVISO: %s\033[0m\n' "$*" >&2; }
 
 # ===== Etapas =====
 verificar_ambiente() {
@@ -133,6 +134,33 @@ instalar_node() {
   echo "Node $(node -v) | npm $(npm -v)"
 }
 
+verificar_docker() {
+  log "Verificando o Docker (integração do Docker Desktop com o WSL)"
+  # A integração é ativada no Docker Desktop (Windows), então aqui apenas verificamos
+  # e orientamos: um Docker ausente não deve impedir o restante do ambiente.
+  local caminho
+  caminho="$(command -v docker || true)"
+
+  if [[ -z "$caminho" ]]; then
+    aviso "Docker não encontrado. Ative em Docker Desktop → Settings → Resources → WSL integration → ${WSL_DISTRO_NAME:-sua distro}."
+    return
+  fi
+  if [[ "$caminho" == "$DEVKIT_WINDOWS_ROOT"/* ]]; then
+    aviso "O docker em uso vem do Windows ($caminho). Ative a integração com o WSL no Docker Desktop."
+    return
+  fi
+  # Um motor exposto via TCP sem TLS aceita comandos de qualquer programa da rede,
+  # o que equivale a dar acesso de root na máquina.
+  if [[ "${DOCKER_HOST:-}" == tcp://* && "${DOCKER_TLS_VERIFY:-}" != "1" ]]; then
+    aviso "DOCKER_HOST=$DOCKER_HOST sem TLS: o motor do Docker fica acessível pela rede sem autenticação."
+  fi
+  if ! docker info > /dev/null 2>&1; then
+    aviso "O comando docker existe, mas o motor não responde. Abra o Docker Desktop."
+    return
+  fi
+  echo "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) pronto ($caminho)."
+}
+
 lembrar_passos_manuais() {
   cat <<'EOF'
 
@@ -142,6 +170,7 @@ lembrar_passos_manuais() {
   3. ssh -T git@github.com e conferir a fingerprint oficial do GitHub
   4. Rodar o script de novo para ativar a assinatura de commits
   5. No PowerShell: wsl --terminate <distro> para aplicar o wsl.conf
+  6. Docker Desktop → Settings → Resources → WSL integration → ativar esta distro
 EOF
 }
 
@@ -152,6 +181,7 @@ main() {
   configurar_wsl_conf
   configurar_path_windows
   instalar_node
+  verificar_docker
   lembrar_passos_manuais
 }
 

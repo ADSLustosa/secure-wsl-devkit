@@ -25,6 +25,13 @@ esperar_igual() {  # descrição, valor obtido, valor esperado
   if [[ "$2" == "$3" ]]; then ok "$1"; else falha "$1 (obtido: '$2', esperado: '$3')"; fi
 }
 
+esperar_saida() {  # descrição, texto esperado na saída, comando...
+  local descricao="$1" texto="$2" saida
+  shift 2
+  saida="$("$@" 2>&1 || true)"
+  if grep -qF "$texto" <<< "$saida"; then ok "$descricao"; else falha "$descricao: saída inesperada: $saida"; fi
+}
+
 esperar_bloqueio() {  # descrição, mensagem esperada, comando...
   local descricao="$1" mensagem="$2" saida
   shift 2
@@ -75,7 +82,7 @@ executar_duas_vezes() {
   fim_grupo
 
   grupo "Segunda execução (idempotência)"
-  "$RAIZ/setup.sh" | tee "$FAKE/segunda-execucao.log"
+  "$RAIZ/setup.sh" 2>&1 | tee "$FAKE/segunda-execucao.log"
   fim_grupo
 }
 
@@ -108,8 +115,39 @@ verificar_resultado() {
   fim_grupo
 }
 
+testar_docker() {
+  grupo "Verificação do Docker: um cenário por situação"
+  local bin="$FAKE/docker-bin" win="$DEVKIT_WINDOWS_ROOT/Program Files/Docker/resources/bin"
+  mkdir -p "$bin/ok" "$bin/parado" "$bin/vazio" "$win"
+
+  # Docker simulado e funcionando
+  # shellcheck disable=SC2016  # o $1 é conteúdo do docker simulado, lido quando ele for executado
+  printf '#!/usr/bin/env bash\n[[ "$1" == version ]] && echo 29.0.0\nexit 0\n' > "$bin/ok/docker"
+  # Comando presente, mas motor desligado
+  printf '#!/usr/bin/env bash\nexit 1\n' > "$bin/parado/docker"
+  # Docker do Windows vazando para o Linux
+  cp "$bin/ok/docker" "$win/docker"
+  chmod +x "$bin/ok/docker" "$bin/parado/docker" "$win/docker"
+
+  # Carrega só as funções do setup.sh (guarda de source) e executa a verificação.
+  # O caminho vai em $1, e não em $0: a guarda compara $0 com o arquivo carregado,
+  # e passá-lo como $0 faria o setup.sh se comportar como se tivesse sido executado.
+  # O bash é chamado pelo caminho absoluto para que o cenário "ausente" use um PATH vazio,
+  # garantindo que nenhum docker do próprio ambiente de teste seja encontrado.
+  # shellcheck disable=SC2016  # o $1 deve ser expandido pelo bash filho, que recebe o caminho do setup.sh
+  local chamar=("$(command -v bash)" -c 'source "$1"; verificar_docker' verificar-docker "$RAIZ/setup.sh")
+  esperar_saida "Docker ausente gera orientação" "Docker não encontrado" env PATH="$bin/vazio" "${chamar[@]}"
+  esperar_saida "Docker do Windows é detectado" "vem do Windows" env PATH="$win:/usr/bin:/bin" "${chamar[@]}"
+  esperar_saida "Motor desligado é detectado" "motor não responde" env PATH="$bin/parado:/usr/bin:/bin" "${chamar[@]}"
+  esperar_saida "Docker funcionando é reconhecido" "pronto" env PATH="$bin/ok:/usr/bin:/bin" "${chamar[@]}"
+  esperar_saida "DOCKER_HOST sem TLS gera alerta" "sem TLS" \
+    env PATH="$bin/ok:/usr/bin:/bin" DOCKER_HOST=tcp://localhost:2375 "${chamar[@]}"
+  fim_grupo
+}
+
 main() {
   simular_wsl
+  testar_docker
   testar_guardas
   executar_duas_vezes
   verificar_resultado
