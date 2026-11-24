@@ -149,7 +149,8 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | **As guardas de segurança são testadas** | O CI prova que o script se recusa a rodar como `root` ou fora do WSL, e não só que ele funciona. |
 | **Branch `main` protegida** | Um ruleset bloqueia pushes diretos, force pushes e commits sem assinatura, e exige o CI verde antes do merge. |
 | **Varredura de segredos em três camadas** | Um hook do Gitleaks bloqueia o commit, um job no CI varre todo o histórico e o push protection do GitHub é a última barreira. Os achados são sempre mascarados. |
-| **Ferramentas fixadas por referências imutáveis** | O hook do Gitleaks é fixado pelo SHA do commit, e o binário do CI é conferido contra um checksum guardado neste repositório. |
+| **Ferramentas fixadas por referências imutáveis** | As GitHub Actions e o hook do Gitleaks são fixados pelo SHA do commit, e o binário do CI é conferido contra um checksum guardado neste repositório. Uma verificação recusa qualquer action sem SHA. |
+| **Dependabot com quarentena** | As actions fixadas continuam recebendo atualizações por pull requests semanais, que esperam 7 dias após cada versão e passam pelos mesmos checks. |
 | **Verificação de exposição do Docker** | Alerta quando o `DOCKER_HOST` aponta para TCP sem TLS: controlar o Docker equivale a ter acesso de root. |
 | **Nenhum segredo no repositório** | Senhas, *passphrases* e tokens ficam em um gerenciador de senhas, nunca no código. |
 
@@ -237,16 +238,18 @@ python3 assets/generate.py
 ```
 secure-wsl-devkit/
 ├── .github/
+│   ├── dependabot.yml       # Atualizações semanais das actions fixadas, com 7 dias de quarentena
 │   └── workflows/
 │       ├── fresh-install.yml # CI: executa o setup.sh duas vezes em um Ubuntu zerado
 │       ├── gitleaks.yml     # CI: varre todo o histórico em busca de segredos
-│       └── shellcheck.yml   # CI: análise estática a cada push e pull request
+│       └── shellcheck.yml   # CI: ShellCheck e verificação das actions fixadas
 ├── assets/
 │   ├── generate.py          # Gera todos os visuais do README (só biblioteca padrão)
 │   └── *.svg                # Banner, terminal, impacto, fluxo, portões de segurança e roadmap
-├── .pre-commit-config.yaml  # Gitleaks e ShellCheck antes de cada commit
+├── .pre-commit-config.yaml  # Gitleaks, ShellCheck e actions fixadas antes de cada commit
 ├── setup.sh                 # Script de setup idempotente
 ├── tests/
+│   ├── check-pinned-actions.sh # Recusa qualquer action sem SHA de commit fixado
 │   └── fresh-install.sh     # Teste de integração com WSL simulado
 ├── LICENSE
 ├── README.md                # English
@@ -258,7 +261,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-pt-light.svg">
-  <img alt="Roadmap: 8 de 9 entregas concluídas; a próxima é fixar as GitHub Actions pelo SHA do commit." src="assets/roadmap-pt-dark.svg" width="100%">
+  <img alt="Roadmap: todas as 9 entregas concluídas." src="assets/roadmap-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -273,7 +276,7 @@ secure-wsl-devkit/
 - ✅ Teste de integração em um Ubuntu zerado no CI, incluindo as guardas de segurança
 - ✅ Verificação da integração do Docker Desktop com o WSL, testada com *test doubles*
 - ✅ Varredura de segredos com o Gitleaks: hook no pre-commit, varredura do histórico no CI e teste de ponta a ponta
-- 🔜 Fixar as GitHub Actions pelo SHA do commit, com atualizações via Dependabot
+- ✅ GitHub Actions fixadas pelo SHA do commit, com verificação automática e atualizações via Dependabot
 
 </details>
 
