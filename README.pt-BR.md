@@ -78,9 +78,7 @@ O `secure-wsl-devkit` resolve os três com um único script, que pode ser execut
   <img alt="Como o setup.sh funciona: oito etapas em ordem; as quatro primeiras sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa." src="assets/flow-pt-dark.svg" width="100%">
 </picture>
 
-<details>
-<summary><b>🧩 Fluxo de decisão detalhado (Mermaid)</b></summary>
-<br>
+### 🧩 Fluxo de decisão
 
 ```mermaid
 flowchart TD
@@ -102,14 +100,12 @@ flowchart TD
     K --> L[Instala o nvm + Node.js LTS]
     L --> M{node vem do nvm?}
     M -- não --> X
-    M -- sim --> D{Docker pronto?}
-    D -- sim --> N([✅ Exibe os passos manuais])
-    D -- não --> W[⚠️ Orienta como ativar] --> N
+    M -- sim --> DK{Docker pronto?}
+    DK -- sim --> N([✅ Exibe os passos manuais])
+    DK -- não --> W[⚠️ Orienta como ativar] --> N
 ```
 
 Cada **losango** é uma verificação de idempotência: a etapa só é executada quando a configuração ainda não existe.
-
-</details>
 
 <details>
 <summary><b>🧰 O que é configurado</b> (clique para expandir)</summary>
