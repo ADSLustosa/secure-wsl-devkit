@@ -1,0 +1,18 @@
+# Dependabot: abre pull requests quando uma action fixada ganha uma versão nova.
+# Ele atualiza o SHA e o comentário "# vX.Y.Z" juntos, mantendo a fixação.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Espera 7 dias após uma versão ser publicada antes de propor a atualização:
+    # versões maliciosas costumam ser descobertas e removidas nos primeiros dias.
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencies"]

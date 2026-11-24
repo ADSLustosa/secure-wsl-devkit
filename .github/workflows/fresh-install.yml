@@ -30,7 +30,7 @@ jobs:
           chmod 440 /etc/sudoers.d/dev
 
       - name: Baixar o código
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Executar o teste de integração como usuário comum
         run: sudo -u dev -H env CI=true RUNNER_TEMP=/tmp ./tests/fresh-install.sh

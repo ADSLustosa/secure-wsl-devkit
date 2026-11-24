@@ -18,3 +18,11 @@ repos:
         entry: shellcheck
         language: system
         types: [shell]
+
+      # Recusa o commit se alguma action dos workflows estiver sem SHA fixado.
+      - id: check-pinned-actions
+        name: Actions fixadas por SHA
+        entry: tests/check-pinned-actions.sh
+        language: script
+        files: ^\.github/workflows/
+        pass_filenames: false
