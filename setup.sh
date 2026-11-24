@@ -39,7 +39,7 @@ instalar_pacotes() {
   # confdef/confold: se um pacote trouxer um arquivo de configuração novo, mantém o atual sem perguntar
   sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential curl unzip keychain shellcheck
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential curl unzip keychain shellcheck pre-commit
 }
 
 configurar_git() {
@@ -62,6 +62,16 @@ configurar_git() {
   else
     echo "Chave SSH não encontrada: a assinatura será ativada na próxima execução."
   fi
+}
+
+configurar_pre_commit() {
+  log "Ativando o pre-commit em todo repositório novo (git init e git clone)"
+  # O template é copiado só na criação de um repositório: os já existentes não mudam.
+  # Repositórios sem .pre-commit-config.yaml são ignorados pelo hook (--skip-on-missing-config).
+  local template="$HOME/.git-template"
+  git config --global init.templateDir "$template"
+  pre-commit init-templatedir --hook-type pre-commit "$template" > /dev/null
+  echo "Repositórios novos com .pre-commit-config.yaml já nascem com os hooks ativos."
 }
 
 configurar_wsl_conf() {
@@ -171,6 +181,7 @@ lembrar_passos_manuais() {
   4. Rodar o script de novo para ativar a assinatura de commits
   5. No PowerShell: wsl --terminate <distro> para aplicar o wsl.conf
   6. Docker Desktop → Settings → Resources → WSL integration → ativar esta distro
+  7. Em repositórios já clonados que tenham .pre-commit-config.yaml: pre-commit install
 EOF
 }
 
@@ -178,6 +189,7 @@ main() {
   verificar_ambiente
   instalar_pacotes
   configurar_git
+  configurar_pre_commit
   configurar_wsl_conf
   configurar_path_windows
   instalar_node
