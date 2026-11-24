@@ -74,7 +74,7 @@ Setting up WSL 2 by hand on more than one computer leads to three silent problem
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/flow-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/flow-en-light.svg">
-  <img alt="How setup.sh works: six steps run in order; the first three always run and the last three are skipped when already done." src="assets/flow-en-dark.svg" width="100%">
+  <img alt="How setup.sh works: seven steps run in order; the first three always run, the next three are skipped when already done, and the Docker step only checks and warns." src="assets/flow-en-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -98,9 +98,11 @@ flowchart TD
     J -- no --> K[Allow only VS Code and C:\Windows]
     J -- yes --> L
     K --> L[Install nvm + Node.js LTS]
-    L --> M{node available?}
+    L --> M{node from nvm?}
     M -- no --> X
-    M -- yes --> N([✅ Print manual steps])
+    M -- yes --> D{Docker ready?}
+    D -- yes --> N([✅ Print manual steps])
+    D -- no --> W[⚠️ Warn how to enable it] --> N
 ```
 
 Each **diamond** is an idempotency check: the step only runs when the configuration is missing.
@@ -120,6 +122,7 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | `wsl.conf` | `appendWindowsPath = false` | Stops the Windows PATH from leaking into Linux |
 | PATH allowlist | Only VS Code and `C:\Windows` | Keeps `code .` and `explorer.exe .` working, nothing else |
 | Node.js | `nvm` + latest LTS | Per-project Node versions without `sudo` |
+| Docker | Checks the Docker Desktop WSL integration | Warns with the exact fix instead of failing the whole setup |
 
 </details>
 
@@ -142,6 +145,7 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | **Read-only CI token** | The workflow declares `permissions: contents: read`, following the principle of least privilege. |
 | **Safety guards are tested** | CI proves the script refuses to run as `root` or outside WSL, not only that it works. |
 | **Protected `main` branch** | A ruleset blocks direct pushes, force pushes and unsigned commits, and requires a green CI run before merging. |
+| **Docker daemon exposure check** | Warns when `DOCKER_HOST` points to TCP without TLS: control of Docker is equivalent to root access. |
 | **No secrets in the repository** | Passwords, passphrases and tokens live in a password manager, never in code. |
 
 ## 🚀 Quick start
@@ -246,7 +250,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-en-light.svg">
-  <img alt="Roadmap: 6 of 9 milestones delivered; next is the container runtime setup." src="assets/roadmap-en-dark.svg" width="100%">
+  <img alt="Roadmap: 7 of 9 milestones delivered; next is secret scanning with Gitleaks." src="assets/roadmap-en-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -259,7 +263,7 @@ secure-wsl-devkit/
 - ✅ ShellCheck in CI and protected `main` branch
 - ✅ Animated, accessible README visuals generated from code
 - ✅ Integration test on a fresh Ubuntu in CI, including the safety guards
-- 🔜 Container runtime setup (Docker Desktop WSL integration)
+- ✅ Docker Desktop WSL integration check, tested with test doubles
 - 🔜 Secret scanning before every commit with Gitleaks + pre-commit
 - 🔜 Pin GitHub Actions by commit SHA, kept up to date by Dependabot
 

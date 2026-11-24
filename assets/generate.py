@@ -49,18 +49,21 @@ TEXTS = {
         ],
         "flow_title": "How setup.sh works",
         "flow_sub": "Every step either runs or detects the existing configuration, so it is safe to repeat",
-        "flow_desc": "Six steps run in order: check environment, base packages, Git and signing, cut the Windows PATH, "
-                     "PATH allowlist and Node.js LTS. The first three always run; the last three are skipped when already done.",
+        "flow_desc": "Seven steps run in order: check environment, base packages, Git and signing, cut the Windows PATH, "
+                     "PATH allowlist, Node.js LTS and Docker check. The first three always run, the next three are skipped "
+                     "when already done, and the Docker step only checks and warns.",
         "flow_steps": [
-            ("Check environment", "root? WSL 2?", True),
-            ("Base packages", "apt-get", True),
-            ("Git + signing", "git config", True),
-            ("Cut Windows PATH", "/etc/wsl.conf", False),
-            ("PATH allowlist", "~/.bashrc", False),
-            ("Node.js LTS", "nvm", False),
+            ("Environment", "root? WSL 2?", "always"),
+            ("Base packages", "apt-get", "always"),
+            ("Git + signing", "git config", "always"),
+            ("Cut Win PATH", "/etc/wsl.conf", "skip"),
+            ("PATH allowlist", "~/.bashrc", "skip"),
+            ("Node.js LTS", "nvm", "skip"),
+            ("Docker", "docker info", "check"),
         ],
-        "flow_always": "runs every time",
+        "flow_always": "runs always",
         "flow_skip": "skips if done",
+        "flow_check": "checks, warns",
         "gates_title": "Every change passes four gates",
         "gates_sub": "A signed commit reaches main only through a pull request with a green CI; a direct push is rejected",
         "gates_desc": "A signed commit passes four gates (signed commit, pull request only, ShellCheck CI and verified "
@@ -75,7 +78,7 @@ TEXTS = {
         "road_items": [
             ("Idempotent setup", True), ("Signed commits", True), ("PATH allowlist", True),
             ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", True),
-            ("Container runtime", False), ("Gitleaks", False), ("Pinned actions", False),
+            ("Container runtime", True), ("Gitleaks", False), ("Pinned actions", False),
         ],
     },
     "pt": {
@@ -93,18 +96,21 @@ TEXTS = {
         ],
         "flow_title": "Como o setup.sh funciona",
         "flow_sub": "Cada etapa executa ou detecta a configuração existente, por isso é seguro repetir",
-        "flow_desc": "Seis etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, corte do PATH do Windows, "
-                     "liberação do VS Code e Node.js LTS. As três primeiras sempre executam; as três últimas são puladas quando já feitas.",
+        "flow_desc": "Sete etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, corte do PATH do Windows, "
+                     "liberação do VS Code, Node.js LTS e verificação do Docker. As três primeiras sempre executam, as três "
+                     "seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa.",
         "flow_steps": [
-            ("Verifica ambiente", "root? WSL 2?", True),
-            ("Pacotes base", "apt-get", True),
-            ("Git + assinatura", "git config", True),
-            ("Corta PATH Win", "/etc/wsl.conf", False),
-            ("Libera VS Code", "~/.bashrc", False),
-            ("Node.js LTS", "nvm", False),
+            ("Ambiente", "root? WSL 2?", "always"),
+            ("Pacotes base", "apt-get", "always"),
+            ("Git + assinat.", "git config", "always"),
+            ("Corta PATH Win", "/etc/wsl.conf", "skip"),
+            ("Libera VS Code", "~/.bashrc", "skip"),
+            ("Node.js LTS", "nvm", "skip"),
+            ("Docker", "docker info", "check"),
         ],
         "flow_always": "roda sempre",
         "flow_skip": "pula se pronto",
+        "flow_check": "verifica, avisa",
         "gates_title": "Toda mudança passa por quatro portões",
         "gates_sub": "Um commit assinado só chega à main por pull request com CI verde; um push direto é recusado",
         "gates_desc": "Um commit assinado passa por quatro portões (commit assinado, somente pull request, CI com ShellCheck e "
@@ -119,7 +125,7 @@ TEXTS = {
         "road_items": [
             ("Setup idempotente", True), ("Commits assinados", True), ("PATH seletivo", True),
             ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", True),
-            ("Contêineres", False), ("Gitleaks", False), ("Actions fixadas", False),
+            ("Contêineres", True), ("Gitleaks", False), ("Actions fixadas", False),
         ],
     },
 }
@@ -407,12 +413,12 @@ def flow(lang, theme):
         f"94% {{ opacity: 1; }} 100% {{ transform: translateX({dist:.1f}px); opacity: 0; }} }}",
     ]
     cards = []
-    for i, (title, detail, always) in enumerate(steps):
+    for i, (title, detail, kind) in enumerate(steps):
         x = left + i * (card_w + gap)
         appear = i / (n - 1) * travel
         css.append(f".k{i} {{ animation: k{i} {loop}s linear infinite; }} " + fade_keyframes(f"k{i}", appear))
-        color = c["muted"] if always else c["accent2"]
-        label = t["flow_always"] if always else t["flow_skip"]
+        color = {"always": c["muted"], "skip": c["accent2"], "check": c["accent"]}[kind]
+        label = t[f"flow_{kind}"]
         bx, by = x + 28, top + 30
         cards.append(
             f'<rect x="{x:.1f}" y="{top}" width="{card_w:.1f}" height="{card_h}" rx="12" fill="{c["panel"]}" stroke="{c["border"]}"/>'
