@@ -102,6 +102,8 @@ verificar_resultado() {
   esperar_igual "Git: assinatura adiada sem chave SSH" "$(git config --global --get commit.gpgsign || echo ausente)" "ausente"
 
   if command -v shellcheck > /dev/null; then ok "shellcheck instalado"; else falha "shellcheck não instalado"; fi
+  if command -v pre-commit > /dev/null; then ok "pre-commit instalado ($(pre-commit --version))"; else falha "pre-commit não instalado"; fi
+  esperar_igual "Git: template de hooks configurado" "$(git config --global init.templateDir)" "$HOME/.git-template"
 
   # O runner já tem um Node do sistema: conferimos o CAMINHO, não só a existência.
   local caminho_node
@@ -145,12 +147,54 @@ testar_docker() {
   fim_grupo
 }
 
+testar_pre_commit() {
+  grupo "pre-commit + Gitleaks: um segredo não pode chegar a um commit"
+  local repo="$FAKE/repo-teste" segredo
+  rm -rf "$repo"
+  git init -q "$repo"
+
+  if [[ -x "$repo/.git/hooks/pre-commit" ]]; then
+    ok "git init já criou o hook (template global)"
+  else
+    falha "o hook não foi criado pelo template"
+  fi
+
+  cp "$RAIZ/.pre-commit-config.yaml" "$repo/"
+  git -C "$repo" add .pre-commit-config.yaml
+  # O primeiro commit faz o pre-commit baixar o Go e compilar o Gitleaks na versão fixada.
+  if git -C "$repo" commit -q -m "chore: configura o pre-commit"; then
+    ok "commit sem segredo é aceito (hooks instalados e executados)"
+  else
+    falha "o commit da configuração foi recusado"
+  fi
+
+  # Token no formato de um GitHub PAT, gerado na hora: o literal "ghp_" + 36 caracteres
+  # nunca aparece neste arquivo, para não ser detectado no próprio repositório.
+  local prefixo="ghp"
+  segredo="${prefixo}_$(od -An -tx1 -N18 /dev/urandom | tr -d ' \n')"
+  printf 'GITHUB_TOKEN=%s\n' "$segredo" > "$repo/config.env"
+  git -C "$repo" add config.env
+
+  local antes depois
+  antes="$(git -C "$repo" rev-list --count HEAD)"
+  if git -C "$repo" commit -q -m "feat: adiciona configuração" > "$FAKE/commit-segredo.log" 2>&1; then
+    falha "o commit com um token foi ACEITO"
+  else
+    ok "commit com token bloqueado pelo Gitleaks"
+  fi
+  depois="$(git -C "$repo" rev-list --count HEAD)"
+  esperar_igual "o histórico não recebeu o commit" "$depois" "$antes"
+  esperar_igual "o token não aparece no log do bloqueio (--redact)" "$(grep -cF "$segredo" "$FAKE/commit-segredo.log" || true)" "0"
+  fim_grupo
+}
+
 main() {
   simular_wsl
   testar_docker
   testar_guardas
   executar_duas_vezes
   verificar_resultado
+  testar_pre_commit
 
   if (( FALHAS > 0 )); then
     echo "::error::$FALHAS verificação(ões) falharam."

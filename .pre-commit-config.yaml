@@ -1,0 +1,20 @@
+# Hooks executados antes de cada commit (pre-commit.com).
+# Ative em um clone existente com: pre-commit install
+minimum_pre_commit_version: "3.0.0"  # a partir da 3.0, o pre-commit instala o Go sozinho para o hook do Gitleaks
+
+repos:
+  # Bloqueia o commit se houver um segredo (token, senha, chave) nas mudanças preparadas.
+  # A versão é fixada pelo SHA do commit, que é imutável; o comentário indica a tag correspondente.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e  # frozen: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # O mesmo ShellCheck do CI, rodando antes do commit: o erro aparece na sua máquina, não no PR.
+  - repo: local
+    hooks:
+      - id: shellcheck
+        name: ShellCheck
+        entry: shellcheck
+        language: system
+        types: [shell]
