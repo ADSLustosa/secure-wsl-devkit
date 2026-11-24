@@ -149,7 +149,8 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | **Safety guards are tested** | CI proves the script refuses to run as `root` or outside WSL, not only that it works. |
 | **Protected `main` branch** | A ruleset blocks direct pushes, force pushes and unsigned commits, and requires a green CI run before merging. |
 | **Secret scanning in three layers** | A Gitleaks pre-commit hook blocks the commit, a CI job scans the whole history, and GitHub push protection is the last barrier. Findings are always redacted. |
-| **Tools pinned to immutable references** | The Gitleaks hook is pinned by commit SHA, and the CI binary is verified against a checksum stored in this repository. |
+| **Tools pinned to immutable references** | GitHub Actions and the Gitleaks hook are pinned by commit SHA, and the CI binary is verified against a checksum stored in this repository. A check rejects any unpinned action. |
+| **Dependabot with a cooldown** | Pinned actions still get updates through weekly pull requests, which wait 7 days after a release and pass the same checks. |
 | **Docker daemon exposure check** | Warns when `DOCKER_HOST` points to TCP without TLS: control of Docker is equivalent to root access. |
 | **No secrets in the repository** | Passwords, passphrases and tokens live in a password manager, never in code. |
 
@@ -237,16 +238,18 @@ python3 assets/generate.py
 ```
 secure-wsl-devkit/
 ├── .github/
+│   ├── dependabot.yml       # Weekly updates of the pinned actions, with a 7-day cooldown
 │   └── workflows/
 │       ├── fresh-install.yml # CI: runs setup.sh twice on a fresh Ubuntu
 │       ├── gitleaks.yml     # CI: scans the whole history for secrets
-│       └── shellcheck.yml   # CI: static analysis on every push and pull request
+│       └── shellcheck.yml   # CI: ShellCheck and pinned-actions check
 ├── assets/
 │   ├── generate.py          # Generates every README visual (stdlib only)
 │   └── *.svg                # Banner, terminal, impact, flow, security gates and roadmap
-├── .pre-commit-config.yaml  # Gitleaks and ShellCheck before every commit
+├── .pre-commit-config.yaml  # Gitleaks, ShellCheck and pinned actions before every commit
 ├── setup.sh                 # Idempotent setup script
 ├── tests/
+│   ├── check-pinned-actions.sh # Rejects any action not pinned by commit SHA
 │   └── fresh-install.sh     # Integration test with a simulated WSL
 ├── LICENSE
 ├── README.md                # English
@@ -258,7 +261,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-en-light.svg">
-  <img alt="Roadmap: 8 of 9 milestones delivered; next is pinning GitHub Actions by commit SHA." src="assets/roadmap-en-dark.svg" width="100%">
+  <img alt="Roadmap: all 9 milestones delivered." src="assets/roadmap-en-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -273,7 +276,7 @@ secure-wsl-devkit/
 - ✅ Integration test on a fresh Ubuntu in CI, including the safety guards
 - ✅ Docker Desktop WSL integration check, tested with test doubles
 - ✅ Secret scanning with Gitleaks: pre-commit hook, full-history CI scan and an end-to-end test
-- 🔜 Pin GitHub Actions by commit SHA, kept up to date by Dependabot
+- ✅ GitHub Actions pinned by commit SHA, enforced by a check and kept up to date by Dependabot
 
 </details>
 

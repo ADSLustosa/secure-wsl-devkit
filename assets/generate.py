@@ -76,10 +76,11 @@ TEXTS = {
         "gates_blocked": "rejected: changes must go through a pull request",
         "gates_target": "protected",
         "road_sub": "{done} of {total} milestones delivered · next: {next}",
+        "road_complete": "All {total} milestones delivered · secure, tested and reproducible",
         "road_items": [
             ("Idempotent setup", True), ("Signed commits", True), ("PATH allowlist", True),
             ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", True),
-            ("Container runtime", True), ("Gitleaks", True), ("Pinned actions", False),
+            ("Container runtime", True), ("Gitleaks", True), ("Pinned actions", True),
         ],
     },
     "pt": {
@@ -124,10 +125,11 @@ TEXTS = {
         "gates_blocked": "recusado: mudanças só entram por pull request",
         "gates_target": "protegida",
         "road_sub": "{done} de {total} entregas concluídas · próxima: {next}",
+        "road_complete": "Todas as {total} entregas concluídas · seguro, testado e reproduzível",
         "road_items": [
             ("Setup idempotente", True), ("Commits assinados", True), ("PATH seletivo", True),
             ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", True),
-            ("Contêineres", True), ("Gitleaks", True), ("Actions fixadas", False),
+            ("Contêineres", True), ("Gitleaks", True), ("Actions fixadas", True),
         ],
     },
 }
@@ -539,7 +541,10 @@ def roadmap(lang, theme):
     x0, x1, y = 90, 1110, 188
     step = (x1 - x0) / (n - 1)
     fill_w = (done - 1) * step
-    sub = t["road_sub"].format(done=done, total=n, next=upcoming)
+    if done == n:
+        sub = t["road_complete"].format(total=n)
+    else:
+        sub = t["road_sub"].format(done=done, total=n, next=upcoming)
 
     css = [
         header_css(c),
