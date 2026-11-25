@@ -134,6 +134,21 @@ EOF
   fim_grupo
 }
 
+testar_keychain_manual() {
+  grupo "keychain: respeita uma configuração manual já existente"
+  # Cenário do notebook: o .bashrc já tem um keychain colocado à mão, sem o marcador do devkit.
+  local casa="$FAKE/casa-keychain-manual"
+  rm -rf "$casa" && mkdir -p "$casa"
+  # shellcheck disable=SC2016  # linha literal do .bashrc, expandida só pelo shell interativo
+  printf '%s\n' 'eval "$(keychain --eval --quiet id_ed25519)"' > "$casa/.bashrc"
+
+  # shellcheck disable=SC2016  # o $1 deve ser expandido pelo bash filho
+  esperar_saida "detecta o keychain manual e avisa da falta de timeout" "não tem --timeout" \
+    env HOME="$casa" bash -c 'source "$1"; configurar_keychain' keychain "$RAIZ/setup.sh"
+  esperar_igual "não duplica a ativação do keychain" "$(grep -c "keychain .*--eval" "$casa/.bashrc")" "1"
+  fim_grupo
+}
+
 testar_guardas() {
   grupo "Testes negativos: as guardas devem interromper o script"
   esperar_bloqueio "recusa executar como root" "Não execute como root" \
@@ -161,7 +176,7 @@ verificar_resultado() {
   esperar_igual ".bashrc com um único bloco de PATH" "$(grep -c "Caminhos do Windows liberados" "$HOME/.bashrc" || true)" "1"
   esperar_igual "PATH aponta para o VS Code do usuário Windows" "$(grep -c "Users/$USUARIO_WINDOWS/AppData" "$HOME/.bashrc" || true)" "1"
   esperar_igual "nenhum \\r (CRLF) gravado no .bashrc" "$(grep -c $'\r' "$HOME/.bashrc" || true)" "0"
-  esperar_igual "segunda execução detectou as etapas já feitas" "$(grep -c "Já configurado" "$log" || true)" "2"
+  esperar_igual "segunda execução detectou as etapas já feitas" "$(grep -c "Já configurado" "$log" || true)" "3"
 
   # O npm do Windows estava no PATH da primeira execução: o instalador do nvm não pode tê-lo visto.
   if [[ -e "$FAKE/npm-do-windows-executado" ]]; then
@@ -171,6 +186,11 @@ verificar_resultado() {
   fi
   esperar_igual "nvm não detectou módulos globais do Windows" \
     "$(grep -c "installed globally" "$FAKE/primeira-execucao.log" || true)" "0"
+
+  esperar_igual ".bashrc com uma única ativação do keychain" "$(grep -c "keychain .*--eval" "$HOME/.bashrc" || true)" "1"
+  esperar_igual "keychain com timeout de 60 minutos" "$(grep -c "keychain .*--timeout 60 " "$HOME/.bashrc" || true)" "1"
+  # Sem chave SSH (como no CI), o bloco do keychain não pode quebrar a abertura do terminal.
+  esperar_saida "terminal abre sem chave SSH" "terminal-ok" bash -ic 'echo terminal-ok'
 
   esperar_igual "Git: branch padrão main" "$(git config --global init.defaultBranch)" "main"
   esperar_igual "Git: pull com rebase" "$(git config --global pull.rebase)" "true"
@@ -269,6 +289,7 @@ main() {
   testar_docker
   testar_filtro_path
   testar_vscode_wsl
+  testar_keychain_manual
   testar_guardas
   executar_duas_vezes
   verificar_resultado
