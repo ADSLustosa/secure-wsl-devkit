@@ -64,11 +64,16 @@ EOF
 
   # Simula o npm do nvm-windows vazando para o Linux, como na primeira execução real
   # (antes de reiniciar a distro). Se alguém o executar, ele deixa um marcador.
+  # Ele responde ao "npm list -g" com o mesmo módulo visto no desktop: é essa lista
+  # que faz o instalador do nvm imprimir o aviso "installed globally".
   mkdir -p "$NPM_WINDOWS"
   cat > "$NPM_WINDOWS/npm" <<EOF
 #!/usr/bin/env bash
 touch "$FAKE/npm-do-windows-executado"
-echo 10.0.0
+case "\$1" in
+  list | ls) printf '%s\n' 'C:\\Users\\$USUARIO_WINDOWS\\AppData\\Local\\nvm\\v24.21.0' '├── corepack@0.36.0' ;;
+  *) echo 10.0.0 ;;
+esac
 EOF
   chmod +x "$NPM_WINDOWS/npm"
 
@@ -86,6 +91,46 @@ testar_filtro_path() {
   esperar_igual "remove /mnt/<letra>, a raiz simulada e entradas vazias" \
     "$(bash -c 'source "$1"; filtrar_path_windows "$2"' filtro "$RAIZ/setup.sh" "$entrada")" \
     "/usr/bin:/home/dev/bin:/mnty/ok"
+  fim_grupo
+}
+
+testar_vscode_wsl() {
+  grupo "VS Code: o comando code precisa abrir conectado ao WSL"
+  local vscode="$DEVKIT_WINDOWS_ROOT/Users/$USUARIO_WINDOWS/AppData/Local/Programs/Microsoft VS Code"
+  local versao="abc1234567" com_extensao="$FAKE/vscode-com-extensao-wsl" wslpath_bin="$FAKE/wslpath-bin"
+  mkdir -p "$vscode/bin" "$vscode/$versao/resources/app/out" "$wslpath_bin"
+  touch "$vscode/$versao/resources/app/out/cli.js"
+
+  # Trecho do script "code" do Windows que diz em qual pasta de versão está o cli.js.
+  printf '#!/usr/bin/env sh\nVERSIONFOLDER="%s"\n' "$versao" > "$vscode/bin/code"
+
+  # Code.exe simulado: responde como o VS Code só em modo Node (ELECTRON_RUN_AS_NODE=1),
+  # com o cli.js da pasta de versão certa e só à consulta do script "code".
+  # Encontra a extensão só se o marcador existir.
+  cat > "$vscode/Code.exe" <<EOF
+#!/usr/bin/env bash
+[[ "\${ELECTRON_RUN_AS_NODE:-}" == 1 && "\$1" == */$versao/resources/app/out/cli.js && "\$2" == --locate-extension && "\$3" == ms-vscode-remote.remote-wsl ]] || exit 9
+[[ -e "$com_extensao" ]] && printf 'c:\\\\Users\\\\ci\\\\.vscode\\\\extensions\\\\ms-vscode-remote.remote-wsl-1.104.7\\r\\n'
+exit 0
+EOF
+
+  # wslpath simulado: só devolve o caminho recebido (o real converte para o formato do Windows).
+  cat > "$wslpath_bin/wslpath" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "${@: -1}"
+EOF
+  chmod +x "$vscode/Code.exe" "$wslpath_bin/wslpath"
+
+  # shellcheck disable=SC2016  # o $1 deve ser expandido pelo bash filho
+  local chamar=("$(command -v bash)" -c 'source "$1"; verificar_vscode_wsl' verificar-vscode "$RAIZ/setup.sh")
+  touch "$com_extensao"
+  esperar_saida "extensão WSL no perfil Default é reconhecida" "Extensão WSL encontrada" \
+    env PATH="$wslpath_bin:/usr/bin:/bin" "${chamar[@]}"
+  rm -f "$com_extensao"
+  esperar_saida "extensão WSL ausente gera a correção" "code --install-extension ms-vscode-remote.remote-wsl" \
+    env PATH="$wslpath_bin:/usr/bin:/bin" "${chamar[@]}"
+  esperar_saida "sem wslpath (fora do WSL), avisa e segue" "Não foi possível verificar" \
+    env PATH="/usr/bin:/bin" "${chamar[@]}"
   fim_grupo
 }
 
@@ -223,6 +268,7 @@ main() {
   simular_wsl
   testar_docker
   testar_filtro_path
+  testar_vscode_wsl
   testar_guardas
   executar_duas_vezes
   verificar_resultado

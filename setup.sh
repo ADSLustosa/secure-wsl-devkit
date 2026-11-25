@@ -104,13 +104,8 @@ configurar_wsl_conf() {
   echo "Bloco [interop] adicionado. Reinicie a distro para aplicar."
 }
 
-configurar_path_windows() {
-  log "Liberando apenas o VS Code e o C:\\Windows no PATH"
-  if grep -qF "$DEVKIT_MARCADOR_PATH" "$HOME/.bashrc" 2>/dev/null; then
-    echo "Já configurado. Nada a fazer."
-    return
-  fi
-
+# Imprime a pasta bin do VS Code do usuário Windows atual (onde fica o script "code").
+localizar_vscode_bin() {
   local usuario_windows
   # "|| true": se o cmd.exe falhar, o pipefail encerraria o script em silêncio aqui mesmo;
   # assim, a falha chega ao "if" abaixo, que explica o problema.
@@ -125,13 +120,25 @@ configurar_path_windows() {
     erro "VS Code não encontrado em: $vscode_bin"
     return 1
   fi
+  printf '%s\n' "$vscode_bin"
+}
+
+configurar_path_windows() {
+  log "Liberando apenas o VS Code e o C:\\Windows no PATH"
+  if grep -qF "$DEVKIT_MARCADOR_PATH" "$HOME/.bashrc" 2>/dev/null; then
+    echo "Já configurado. Nada a fazer."
+    return
+  fi
+
+  local vscode_bin
+  vscode_bin="$(localizar_vscode_bin)" || return 1
 
   {
     printf '\n%s (appendWindowsPath = false) ---\n' "$DEVKIT_MARCADOR_PATH"
     # shellcheck disable=SC2016  # $PATH deve ficar literal, para ser expandido em cada terminal
     printf 'export PATH="$PATH:%s:%s/Windows"\n' "$vscode_bin" "$DEVKIT_WINDOWS_ROOT"
   } >> "$HOME/.bashrc"
-  echo "PATH configurado para o usuário Windows: $usuario_windows"
+  echo "PATH configurado: $vscode_bin"
 }
 
 instalar_node() {
@@ -194,6 +201,42 @@ verificar_docker() {
   echo "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) pronto ($caminho)."
 }
 
+verificar_vscode_wsl() {
+  log "Verificando se o comando code abre conectado ao WSL"
+  # O script "code" do Windows pergunta ao VS Code onde está a extensão WSL (--locate-extension),
+  # e essa consulta olha só o perfil Default. Sem resposta, ele abre a pasta por \\wsl.localhost,
+  # do lado do Windows (Git, Node e terminal do Windows). Aqui repetimos a mesma consulta.
+  # Chamamos o script do Windows pelo caminho: no terminal do VS Code, o "code" do PATH é outro
+  # (o remote CLI do VS Code Server), que não faz essa consulta.
+  local vscode_bin
+  if ! vscode_bin="$(localizar_vscode_bin 2>/dev/null)"; then
+    aviso "VS Code não encontrado: não foi possível verificar se o comando code abre no WSL."
+    return
+  fi
+
+  local vscode_dir="${vscode_bin%/bin}" versao cli
+  # Desde 2026 o cli.js fica numa pasta com o início do commit (VERSIONFOLDER no script "code").
+  versao="$(sed -n 's/^VERSIONFOLDER="\([^"]*\)"$/\1/p' "$vscode_bin/code" 2>/dev/null || true)"
+  cli="$vscode_dir${versao:+/$versao}/resources/app/out/cli.js"
+  if [[ ! -x "$vscode_dir/Code.exe" || ! -f "$cli" ]] || ! command -v wslpath > /dev/null; then
+    aviso "Não foi possível verificar se o comando code abre no WSL (estrutura do VS Code não reconhecida)."
+    return
+  fi
+
+  # WSLENV leva o ELECTRON_RUN_AS_NODE para o processo do Windows: sem ele, o Code.exe
+  # abriria uma janela em vez de só responder à consulta.
+  local extensao
+  extensao="$(WSLENV="ELECTRON_RUN_AS_NODE/w${WSLENV:+:$WSLENV}" ELECTRON_RUN_AS_NODE=1 \
+    timeout 60 "$vscode_dir/Code.exe" "$(wslpath -m "$cli")" --locate-extension ms-vscode-remote.remote-wsl \
+    2> /dev/null < /dev/null | tr -d '\r' || true)"
+  if [[ -z "$extensao" ]]; then
+    aviso "A extensão WSL não está no perfil Default do VS Code: o comando code abriria a pasta pelo lado do Windows."
+    aviso "Correção, no PowerShell: code --install-extension ms-vscode-remote.remote-wsl"
+    return
+  fi
+  echo "Extensão WSL encontrada: o comando code abre conectado ao WSL."
+}
+
 lembrar_passos_manuais() {
   cat <<'EOF'
 
@@ -217,6 +260,7 @@ main() {
   configurar_path_windows
   instalar_node
   verificar_docker
+  verificar_vscode_wsl
   lembrar_passos_manuais
 }
 
