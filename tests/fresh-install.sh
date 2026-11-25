@@ -12,6 +12,7 @@ RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly RAIZ
 readonly FAKE="${RUNNER_TEMP:-/tmp}/fake-wsl"
 readonly USUARIO_WINDOWS="ci-user"
+readonly NPM_WINDOWS="$FAKE/c/Users/$USUARIO_WINDOWS/AppData/Local/nvm/v24.21.0"
 FALHAS=0
 
 # ===== Auxiliares =====
@@ -61,9 +62,30 @@ EOF
   echo "Linux version 6.18.0-microsoft-standard-WSL2 (simulado)" > "$FAKE/proc-version-wsl"
   echo "Linux version 6.18.0-generic (simulado)" > "$FAKE/proc-version-linux"
 
+  # Simula o npm do nvm-windows vazando para o Linux, como na primeira execução real
+  # (antes de reiniciar a distro). Se alguém o executar, ele deixa um marcador.
+  mkdir -p "$NPM_WINDOWS"
+  cat > "$NPM_WINDOWS/npm" <<EOF
+#!/usr/bin/env bash
+touch "$FAKE/npm-do-windows-executado"
+echo 10.0.0
+EOF
+  chmod +x "$NPM_WINDOWS/npm"
+
   export DEVKIT_WINDOWS_ROOT="$FAKE/c"
   export DEVKIT_PROC_VERSION="$FAKE/proc-version-wsl"
   ok "WSL simulado em $FAKE"
+  fim_grupo
+}
+
+testar_filtro_path() {
+  grupo "Filtro do PATH: nada do Windows chega ao instalador do nvm"
+  # Mesmo padrão do testar_docker: carrega só as funções do setup.sh.
+  local entrada="/usr/bin:/mnt/c/Windows:/mnt/d/tools::$DEVKIT_WINDOWS_ROOT/Users/x:/home/dev/bin:/mnty/ok"
+  # shellcheck disable=SC2016  # $1 e $2 são expandidos pelo bash filho
+  esperar_igual "remove /mnt/<letra>, a raiz simulada e entradas vazias" \
+    "$(bash -c 'source "$1"; filtrar_path_windows "$2"' filtro "$RAIZ/setup.sh" "$entrada")" \
+    "/usr/bin:/home/dev/bin:/mnty/ok"
   fim_grupo
 }
 
@@ -77,8 +99,8 @@ testar_guardas() {
 }
 
 executar_duas_vezes() {
-  grupo "Primeira execução (máquina zerada)"
-  "$RAIZ/setup.sh"
+  grupo "Primeira execução (máquina zerada, com o npm do Windows no PATH)"
+  PATH="$NPM_WINDOWS:$PATH" "$RAIZ/setup.sh" 2>&1 | tee "$FAKE/primeira-execucao.log"
   fim_grupo
 
   grupo "Segunda execução (idempotência)"
@@ -95,6 +117,15 @@ verificar_resultado() {
   esperar_igual "PATH aponta para o VS Code do usuário Windows" "$(grep -c "Users/$USUARIO_WINDOWS/AppData" "$HOME/.bashrc" || true)" "1"
   esperar_igual "nenhum \\r (CRLF) gravado no .bashrc" "$(grep -c $'\r' "$HOME/.bashrc" || true)" "0"
   esperar_igual "segunda execução detectou as etapas já feitas" "$(grep -c "Já configurado" "$log" || true)" "2"
+
+  # O npm do Windows estava no PATH da primeira execução: o instalador do nvm não pode tê-lo visto.
+  if [[ -e "$FAKE/npm-do-windows-executado" ]]; then
+    falha "o npm do Windows foi executado durante o setup"
+  else
+    ok "o npm do Windows não foi executado"
+  fi
+  esperar_igual "nvm não detectou módulos globais do Windows" \
+    "$(grep -c "installed globally" "$FAKE/primeira-execucao.log" || true)" "0"
 
   esperar_igual "Git: branch padrão main" "$(git config --global init.defaultBranch)" "main"
   esperar_igual "Git: pull com rebase" "$(git config --global pull.rebase)" "true"
@@ -191,6 +222,7 @@ testar_pre_commit() {
 main() {
   simular_wsl
   testar_docker
+  testar_filtro_path
   testar_guardas
   executar_duas_vezes
   verificar_resultado
