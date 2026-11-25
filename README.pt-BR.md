@@ -187,6 +187,11 @@ cat ~/.ssh/id_ed25519.pub
 4. No **PowerShell**, reinicie apenas esta distribuição para aplicar o `wsl.conf`: `wsl --terminate Ubuntu-26.04`
 5. Este repositório foi clonado antes do setup, então ative os hooks dele uma vez: `pre-commit install`
 
+> [!NOTE]
+> **Docker Desktop depois do passo 4.** Reiniciar a distribuição também derruba a integração do Docker Desktop que roda dentro dela, então o Docker Desktop pode exibir *"WSL integration with distro … unexpectedly stopped"*. Isso é esperado: clique em **Restart the WSL integration**. Se o alerta continuar voltando, feche o Docker Desktop pela bandeja do sistema, rode `wsl --shutdown` no PowerShell, abra o Docker Desktop, espere o *Engine running* e só então abra a distribuição.
+>
+> A integração leva alguns segundos para subir, e até lá o `docker` pode responder *command not found*. **Não** instale o `docker.io` nem o `podman-docker` sugeridos pelo terminal: isso criaria um segundo motor Docker competindo com o Docker Desktop.
+
 > [!TIP]
 > Quando o SSH perguntar se você confia no servidor, cole a fingerprint oficial como resposta em vez de digitar `yes`. O SSH compara os valores por você e elimina o erro humano.
 
@@ -207,6 +212,9 @@ grep -c "Caminhos do Windows liberados" ~/.bashrc
 
 # Verificação da assinatura do último commit de qualquer repositório
 git log --show-signature -1
+
+# Docker: a versão do servidor também precisa aparecer (o cliente sozinho responde mesmo sem a integração)
+docker version --format 'Cliente: {{.Client.Version}} | Servidor: {{.Server.Version}}'
 ```
 
 </details>
