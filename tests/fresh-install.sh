@@ -64,11 +64,16 @@ EOF
 
   # Simula o npm do nvm-windows vazando para o Linux, como na primeira execução real
   # (antes de reiniciar a distro). Se alguém o executar, ele deixa um marcador.
+  # Ele responde ao "npm list -g" com o mesmo módulo visto no desktop: é essa lista
+  # que faz o instalador do nvm imprimir o aviso "installed globally".
   mkdir -p "$NPM_WINDOWS"
   cat > "$NPM_WINDOWS/npm" <<EOF
 #!/usr/bin/env bash
 touch "$FAKE/npm-do-windows-executado"
-echo 10.0.0
+case "\$1" in
+  list | ls) printf '%s\n' 'C:\\Users\\$USUARIO_WINDOWS\\AppData\\Local\\nvm\\v24.21.0' '├── corepack@0.36.0' ;;
+  *) echo 10.0.0 ;;
+esac
 EOF
   chmod +x "$NPM_WINDOWS/npm"
 
