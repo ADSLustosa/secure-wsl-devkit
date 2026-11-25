@@ -75,7 +75,7 @@ O `secure-wsl-devkit` resolve os três com um único script, que pode ser execut
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/flow-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/flow-pt-light.svg">
-  <img alt="Como o setup.sh funciona: oito etapas em ordem; as quatro primeiras sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa." src="assets/flow-pt-dark.svg" width="100%">
+  <img alt="Como o setup.sh funciona: dez etapas em ordem; as quatro primeiras sempre executam, as quatro seguintes são puladas quando já feitas, e as do Docker e do VS Code apenas verificam e avisam." src="assets/flow-pt-dark.svg" width="100%">
 </picture>
 
 ### 🧩 Fluxo de decisão
@@ -91,7 +91,10 @@ flowchart TD
     E -- não --> G[Adia a assinatura para a próxima execução]
     F --> P[Ativa o pre-commit em repositórios novos]
     G --> P
-    P --> H{wsl.conf já configurado?}
+    P --> KC{keychain já está no .bashrc?}
+    KC -- não --> KA[Ativa o agente SSH com timeout de 60 minutos]
+    KC -- sim --> H
+    KA --> H{wsl.conf já configurado?}
     H -- não --> I[Desliga a importação do PATH do Windows]
     H -- sim --> J
     I --> J{Liberação do PATH já está no .bashrc?}
@@ -101,8 +104,10 @@ flowchart TD
     L --> M{node vem do nvm?}
     M -- não --> X
     M -- sim --> DK{Docker pronto?}
-    DK -- sim --> N([✅ Exibe os passos manuais])
-    DK -- não --> W[⚠️ Orienta como ativar] --> N
+    DK -- sim --> VS{code abre no WSL?}
+    DK -- não --> W[⚠️ Orienta como ativar] --> VS
+    VS -- sim --> N([✅ Exibe os passos manuais])
+    VS -- não --> WV[⚠️ Orienta a correção] --> N
 ```
 
 Cada **losango** é uma verificação de idempotência: a etapa só é executada quando a configuração ainda não existe.
@@ -123,6 +128,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | Liberação do PATH | Apenas o VS Code e o `C:\Windows` | Mantém o `code .` e o `explorer.exe .` funcionando, e nada além disso |
 | Node.js | `nvm` + versão LTS mais recente | Versões de Node por projeto, sem `sudo` |
 | Docker | Verifica a integração do Docker Desktop com o WSL | Orienta a correção exata em vez de interromper todo o setup |
+| VS Code | Verifica se o `code` abre conectado ao WSL (extensão WSL no perfil Default) | Sem ela, o `code .` abre a pasta pelo lado do Windows, com o Git e o Node do Windows |
 
 </details>
 
@@ -267,7 +273,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-pt-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-pt-light.svg">
-  <img alt="Roadmap: todas as 9 entregas concluídas." src="assets/roadmap-pt-dark.svg" width="100%">
+  <img alt="Roadmap: todas as 10 entregas concluídas." src="assets/roadmap-pt-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -283,6 +289,7 @@ secure-wsl-devkit/
 - ✅ Verificação da integração do Docker Desktop com o WSL, testada com *test doubles*
 - ✅ Varredura de segredos com o Gitleaks: hook no pre-commit, varredura do histórico no CI e teste de ponta a ponta
 - ✅ GitHub Actions fixadas pelo SHA do commit, com verificação automática e atualizações via Dependabot
+- ✅ v1.0.1: validado em uma segunda máquina real, com verificação do VS Code no WSL, agente SSH com timeout e instalação do nvm isolada do PATH do Windows
 
 </details>
 

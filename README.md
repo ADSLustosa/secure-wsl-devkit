@@ -75,7 +75,7 @@ Setting up WSL 2 by hand on more than one computer leads to three silent problem
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/flow-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/flow-en-light.svg">
-  <img alt="How setup.sh works: eight steps run in order; the first four always run, the next three are skipped when already done, and the Docker step only checks and warns." src="assets/flow-en-dark.svg" width="100%">
+  <img alt="How setup.sh works: ten steps run in order; the first four always run, the next four are skipped when already done, and the Docker and VS Code steps only check and warn." src="assets/flow-en-dark.svg" width="100%">
 </picture>
 
 ### 🧩 Decision flow
@@ -91,7 +91,10 @@ flowchart TD
     E -- no --> G[Postpone signing to next run]
     F --> P[Enable pre-commit for new repositories]
     G --> P
-    P --> H{wsl.conf already configured?}
+    P --> KC{keychain already in .bashrc?}
+    KC -- no --> KA[Enable SSH agent with a 60-minute timeout]
+    KC -- yes --> H
+    KA --> H{wsl.conf already configured?}
     H -- no --> I[Disable Windows PATH import]
     H -- yes --> J
     I --> J{PATH allowlist already in .bashrc?}
@@ -101,8 +104,10 @@ flowchart TD
     L --> M{node from nvm?}
     M -- no --> X
     M -- yes --> DK{Docker ready?}
-    DK -- yes --> N([✅ Print manual steps])
-    DK -- no --> W[⚠️ Warn how to enable it] --> N
+    DK -- yes --> VS{code opens in WSL?}
+    DK -- no --> W[⚠️ Warn how to enable it] --> VS
+    VS -- yes --> N([✅ Print manual steps])
+    VS -- no --> WV[⚠️ Warn with the fix] --> N
 ```
 
 Each **diamond** is an idempotency check: the step only runs when the configuration is missing.
@@ -123,6 +128,7 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | PATH allowlist | Only VS Code and `C:\Windows` | Keeps `code .` and `explorer.exe .` working, nothing else |
 | Node.js | `nvm` + latest LTS | Per-project Node versions without `sudo` |
 | Docker | Checks the Docker Desktop WSL integration | Warns with the exact fix instead of failing the whole setup |
+| VS Code | Checks that `code` opens connected to WSL (WSL extension in the Default profile) | Without it, `code .` opens the folder on the Windows side, with Windows Git and Node |
 
 </details>
 
@@ -267,7 +273,7 @@ secure-wsl-devkit/
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/roadmap-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/roadmap-en-light.svg">
-  <img alt="Roadmap: all 9 milestones delivered." src="assets/roadmap-en-dark.svg" width="100%">
+  <img alt="Roadmap: all 10 milestones delivered." src="assets/roadmap-en-dark.svg" width="100%">
 </picture>
 
 <details>
@@ -283,6 +289,7 @@ secure-wsl-devkit/
 - ✅ Docker Desktop WSL integration check, tested with test doubles
 - ✅ Secret scanning with Gitleaks: pre-commit hook, full-history CI scan and an end-to-end test
 - ✅ GitHub Actions pinned by commit SHA, enforced by a check and kept up to date by Dependabot
+- ✅ v1.0.1: validated on a second real machine, adding a VS Code WSL check, an SSH agent with a timeout and an nvm install isolated from the Windows PATH
 
 </details>
 
