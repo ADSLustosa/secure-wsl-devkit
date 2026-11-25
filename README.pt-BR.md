@@ -20,11 +20,76 @@
 
 🌐 [English](README.md) · **Português**
 
-**[Por quê](#-por-que-este-projeto-existe)** · **[Demonstração](#-veja-em-ação)** · **[Impacto](#-impacto-medido)** · **[Como funciona](#-como-funciona)** · **[Segurança](#-decisões-de-segurança)** · **[Como usar](#-como-usar)** · **[Roadmap](#-roadmap)**
+**[Linguagem simples](#-em-linguagem-simples)** · **[Por quê](#-por-que-este-projeto-existe)** · **[Demonstração](#-veja-em-ação)** · **[Impacto](#-impacto-medido)** · **[Como funciona](#-como-funciona)** · **[Segurança](#-decisões-de-segurança)** · **[Como usar](#-como-usar)** · **[Roadmap](#-roadmap)**
 
 </div>
 
 ---
+
+## 👋 Em linguagem simples
+
+> **Não é da área de desenvolvimento?** Esta seção explica o projeto sem jargões. Quem é desenvolvedor pode ir direto para [Por que este projeto existe](#-por-que-este-projeto-existe).
+
+### O que é o projeto?
+
+Uma ferramenta que **prepara um computador para o desenvolvimento de software, de forma automática e segura**. Em vez de seguir uma longa lista de passos à mão, correndo o risco de esquecer algum, o desenvolvedor executa um único comando, e o computador fica configurado sempre do mesmo jeito.
+
+Pense na diferença entre montar um móvel seguindo o manual e ter um robô que o monta exatamente certo, todas as vezes, e ainda confere o próprio trabalho.
+
+### O que é o WSL?
+
+Boa parte dos programas por trás de sites, aplicativos e serviços online roda no **Linux**, um sistema operacional diferente do Windows. Quem desenvolve usando Windows continua precisando do Linux para criar e testar esses programas.
+
+O **WSL** (*Windows Subsystem for Linux*, ou Subsistema do Windows para Linux) é um recurso da Microsoft que roda **um Linux completo dentro do Windows**, lado a lado, sem precisar de um segundo computador. Imagine dois cômodos na mesma casa: o Windows mora em um, e o Linux no outro.
+
+### Qual a necessidade dele?
+
+Na configuração padrão, as portas entre esses dois cômodos ficam escancaradas, e isso causa problemas reais:
+
+- **As ferramentas se misturam.** Um programa do Windows pode ser usado por engano onde se esperava a versão do Linux. Tudo parece funcionar, mas com erros silenciosos que levam horas para serem encontrados. No computador do autor, **32 pastas do Windows** estavam vazando para o Linux.
+- **Cada computador fica de um jeito.** Passos manuais são esquecidos ou feitos de forma diferente, e o código que funciona em uma máquina quebra em outra: o clássico *"mas no meu computador funciona"*.
+- **A autoria pode ser falsificada.** Sem uma configuração extra, qualquer pessoa pode publicar código em seu nome, e não há como provar quem escreveu o quê.
+
+### O que ele faz, na prática
+
+| Antes | Depois de executar o projeto |
+|---|---|
+| Uma longa lista de comandos manuais | Um único comando |
+| 32 pastas do Windows vazando para o Linux | Apenas 2, liberadas de propósito |
+| Ferramentas do Windows ocupando o lugar das do Linux | Nenhuma, e o setup confere isso |
+| Código que qualquer um podia publicar em seu nome | Toda mudança leva uma assinatura digital |
+| Executar o setup de novo podia estragar algo | Seguro de repetir: ele detecta o que já está feito |
+
+### Por que isso importa para uma empresa
+
+- **Integração mais rápida:** o computador de quem acabou de chegar à equipe é preparado com um comando, configurado exatamente como o dos colegas.
+- **Segurança por padrão:** toda mudança é assinada, senhas e chaves nunca entram no código, e qualquer tentativa de publicar uma delas é bloqueada automaticamente.
+- **Confiabilidade:** toda mudança neste projeto é testada automaticamente em computadores zerados antes de ser aceita.
+
+### O que ele mostra sobre o autor (para recrutadores)
+
+| Competência | Evidência neste repositório |
+|---|---|
+| Automação com Linux e Bash | `setup.sh`: 10 etapas, seguro de executar quantas vezes for preciso |
+| Segurança da informação | Commits assinados, varredura de segredos em três camadas, configuração com o mínimo de privilégios |
+| Testes automatizados e CI/CD | Toda mudança é testada em Ubuntu 24.04 e 26.04 zerados pelo GitHub Actions |
+| Fluxo profissional com Git | Issues, pull requests, branch principal protegida e versões publicadas |
+| Resolução de problemas reais | v1.0.1: validado em um segundo computador real; 5 problemas encontrados, diagnosticados e resolvidos, com testes automatizados para os bugs |
+| Comunicação técnica | Documentação bilíngue, para públicos técnicos e não técnicos |
+
+<details>
+<summary><b>📖 Minidicionário</b> (clique para expandir)</summary>
+<br>
+
+- **Sistema operacional:** o programa base de um computador, como o Windows, o Linux ou o macOS.
+- **Terminal:** uma janela de texto onde se digitam comandos.
+- **Script:** um arquivo com instruções que o computador executa em ordem, como uma lista de tarefas automatizada.
+- **Commit:** uma alteração no código, salva e registrada. Um **commit assinado** leva uma assinatura digital que prova quem o fez.
+- **CI (integração contínua):** testes automáticos que rodam a cada mudança, antes de ela ser aceita.
+- **Idempotente:** executar uma vez ou várias dá o mesmo resultado, como apertar duas vezes o botão do elevador.
+- **Segredo:** uma senha, token ou chave que nunca pode ser publicada.
+
+</details>
 
 ## 📌 Por que este projeto existe
 
