@@ -19,6 +19,23 @@ log() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 erro() { printf '\033[1;31mERRO: %s\033[0m\n' "$*" >&2; }
 aviso() { printf '\033[1;33mAVISO: %s\033[0m\n' "$*" >&2; }
 
+# Devolve o PATH recebido sem as pastas do Windows (/mnt/<letra> e a raiz configurada)
+# e sem entradas vazias, que o shell interpretaria como "a pasta atual".
+# Necessário na primeira execução: o corte do wsl.conf só vale depois de reiniciar a distro.
+filtrar_path_windows() {
+  local -a entradas mantidas=()
+  local entrada
+  IFS=':' read -r -a entradas <<< "$1"
+  for entrada in "${entradas[@]}"; do
+    case "$entrada" in
+      "" | /mnt/[a-z] | /mnt/[a-z]/* | "$DEVKIT_WINDOWS_ROOT" | "$DEVKIT_WINDOWS_ROOT"/*) continue ;;
+    esac
+    mantidas+=("$entrada")
+  done
+  local IFS=':'
+  printf '%s\n' "${mantidas[*]}"
+}
+
 # ===== Etapas =====
 verificar_ambiente() {
   log "Verificando o ambiente"
@@ -120,6 +137,12 @@ configurar_path_windows() {
 instalar_node() {
   log "Instalando o nvm e o Node.js LTS"
   export NVM_DIR="$HOME/.nvm"
+  # PATH local a esta função (e exportado para o instalador): sem as pastas do Windows,
+  # o instalador do nvm não encontra o npm do Windows. As etapas seguintes voltam a ver
+  # o PATH original, o que mantém a detecção de um docker vindo do Windows.
+  local path_linux
+  path_linux="$(filtrar_path_windows "$PATH")"
+  local -x PATH="$path_linux"
 
   if [[ ! -d "$NVM_DIR" ]]; then
     curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${DEVKIT_NVM_VERSION}/install.sh" | bash
