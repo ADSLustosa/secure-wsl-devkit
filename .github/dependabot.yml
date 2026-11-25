@@ -13,6 +13,9 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+        # Só minor e patch entram no grupo: cada versão MAJOR chega em um PR
+        # próprio, para que o changelog dela seja lido com atenção antes do merge.
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "ci"
     labels: ["dependencies"]
