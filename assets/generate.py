@@ -49,18 +49,20 @@ TEXTS = {
         ],
         "flow_title": "How setup.sh works",
         "flow_sub": "Every step either runs or detects the existing configuration, so it is safe to repeat",
-        "flow_desc": "Eight steps run in order: check environment, base packages, Git and signing, pre-commit template, "
-                     "cut the Windows PATH, PATH allowlist, Node.js LTS and Docker check. The first four always run, the next "
-                     "three are skipped when already done, and the Docker step only checks and warns.",
+        "flow_desc": "Ten steps run in order: check environment, base packages, Git and signing, pre-commit template, "
+                     "SSH agent, cut the Windows PATH, PATH allowlist, Node.js LTS, Docker check and VS Code check. The first "
+                     "four always run, the next four are skipped when already done, and the last two only check and warn.",
         "flow_steps": [
             ("Environment", "root? WSL 2?", "always"),
             ("Base packages", "apt-get", "always"),
             ("Git + signing", "git config", "always"),
             ("pre-commit", "templateDir", "always"),
-            ("Cut Win PATH", "/etc/wsl.conf", "skip"),
-            ("PATH allowlist", "~/.bashrc", "skip"),
+            ("SSH agent", "keychain", "skip"),
+            ("Cut Win PATH", "wsl.conf", "skip"),
+            ("PATH allow", "~/.bashrc", "skip"),
             ("Node.js LTS", "nvm", "skip"),
             ("Docker", "docker info", "check"),
+            ("VS Code", "remote-wsl", "check"),
         ],
         "flow_always": "runs always",
         "flow_skip": "skips if done",
@@ -81,6 +83,7 @@ TEXTS = {
             ("Idempotent setup", True), ("Signed commits", True), ("PATH allowlist", True),
             ("CI + protected main", True), ("Animated docs", True), ("Fresh-distro CI", True),
             ("Container runtime", True), ("Gitleaks", True), ("Pinned actions", True),
+            ("2nd machine", True),
         ],
     },
     "pt": {
@@ -98,18 +101,21 @@ TEXTS = {
         ],
         "flow_title": "Como o setup.sh funciona",
         "flow_sub": "Cada etapa executa ou detecta a configuração existente, por isso é seguro repetir",
-        "flow_desc": "Oito etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, template do pre-commit, "
-                     "corte do PATH do Windows, liberação do VS Code, Node.js LTS e verificação do Docker. As quatro primeiras "
-                     "sempre executam, as três seguintes são puladas quando já feitas, e a do Docker apenas verifica e avisa.",
+        "flow_desc": "Dez etapas em ordem: verificação do ambiente, pacotes base, Git e assinatura, template do pre-commit, "
+                     "agente SSH, corte do PATH do Windows, liberação do VS Code, Node.js LTS, verificação do Docker e verificação "
+                     "do VS Code. As quatro primeiras sempre executam, as quatro seguintes são puladas quando já feitas, e as "
+                     "duas últimas apenas verificam e avisam.",
         "flow_steps": [
             ("Ambiente", "root? WSL 2?", "always"),
             ("Pacotes base", "apt-get", "always"),
             ("Git + assinat.", "git config", "always"),
             ("pre-commit", "templateDir", "always"),
-            ("Corta PATH Win", "/etc/wsl.conf", "skip"),
-            ("Libera VS Code", "~/.bashrc", "skip"),
+            ("Agente SSH", "keychain", "skip"),
+            ("Corta PATH", "wsl.conf", "skip"),
+            ("Libera PATH", "~/.bashrc", "skip"),
             ("Node.js LTS", "nvm", "skip"),
             ("Docker", "docker info", "check"),
+            ("VS Code", "remote-wsl", "check"),
         ],
         "flow_always": "roda sempre",
         "flow_skip": "pula se pronto",
@@ -130,6 +136,7 @@ TEXTS = {
             ("Setup idempotente", True), ("Commits assinados", True), ("PATH seletivo", True),
             ("CI + main protegida", True), ("Docs animadas", True), ("CI em distro zerada", True),
             ("Contêineres", True), ("Gitleaks", True), ("Actions fixadas", True),
+            ("2ª máquina", True),
         ],
     },
 }
@@ -239,6 +246,8 @@ def terminal():
         ("out", "Assinatura de commits ativada.", "ok"),
         ("out", "==> Ativando o pre-commit em todo repositório novo (git init e git clone)", "h"),
         ("out", "Repositórios novos com .pre-commit-config.yaml já nascem com os hooks ativos.", "o"),
+        ("out", "==> Ativando o agente SSH (keychain)", "h"),
+        ("out", "Já configurado. Nada a fazer.", "skip"),
         ("out", "==> Desligando a importação do PATH do Windows", "h"),
         ("out", "Já configurado. Nada a fazer.", "skip"),
         ("out", "==> Liberando apenas o VS Code e o C:\\Windows no PATH", "h"),
@@ -247,6 +256,8 @@ def terminal():
         ("out", "Node v26.13.1 | npm 11.20.0", "o"),
         ("out", "==> Verificando o Docker (integração do Docker Desktop com o WSL)", "h"),
         ("out", "Docker 29.8.2 pronto (/usr/bin/docker).", "ok"),
+        ("out", "==> Verificando se o comando code abre conectado ao WSL", "h"),
+        ("out", "Extensão WSL encontrada: o comando code abre conectado ao WSL.", "ok"),
         ("out", "✓ Setup automático concluído.", "ok"),
         ("cmd", "grep -c appendWindowsPath /etc/wsl.conf"),
         ("out", "1", "ok"),
@@ -397,8 +408,11 @@ def fade_keyframes(name, appear, hide_from=94):
 # --------------------------------------------------------------------------- flow
 def flow(lang, theme):
     t, c = TEXTS[lang], THEMES[theme]
-    w, h = 1200, 300
     steps = t["flow_steps"]
+    # Mais etapas pedem uma tela mais larga e letras um pouco menores, para nada vazar dos cartões.
+    compacto = len(steps) > 8
+    w, h = (1360 if compacto else 1200), 300
+    fs_step, fs_detail, fs_pill = (13, 11.5, 9.5) if compacto else (14, 12, 10.5)
     n, left, gap, top, card_h = len(steps), 32, 14, 104, 132
     card_w = (w - 2 * left - gap * (n - 1)) / n
     loop, travel = 7.5, 75  # loop length in seconds; % of the loop spent travelling
@@ -408,10 +422,10 @@ def flow(lang, theme):
 
     css = [
         header_css(c),
-        f".step {{ font-size: 14px; font-weight: 700; fill: {c['text']}; }}",
-        f".detail {{ font-family: {MONO}; font-size: 12px; fill: {c['muted']}; }}",
+        f".step {{ font-size: {fs_step}px; font-weight: 700; fill: {c['text']}; }}",
+        f".detail {{ font-family: {MONO}; font-size: {fs_detail}px; fill: {c['muted']}; }}",
         f".num {{ font-size: 13px; font-weight: 700; fill: {c['text']}; }}",
-        f".pill {{ font-family: {MONO}; font-size: 10.5px; }}",
+        f".pill {{ font-family: {MONO}; font-size: {fs_pill}px; }}",
         f".track {{ transform-box: fill-box; transform-origin: left center; transform: scaleX(1); "
         f"animation: track {loop}s linear infinite; }}",
         f"@keyframes track {{ 0% {{ transform: scaleX(0); opacity: 1; }} {travel}% {{ transform: scaleX(1); }} "
