@@ -118,6 +118,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | Git | Identidade, `main` como branch padrão, `pull.rebase`, `autocrlf input`, `fetch.prune` | Histórico linear, quebras de linha no padrão Linux e lista de branches sempre limpa |
 | pre-commit | `init.templateDir` com o hook do pre-commit | Todo clone novo com `.pre-commit-config.yaml` já recebe os hooks |
 | Assinatura de commits | `gpg.format ssh`, chave de assinatura e `allowed_signers` | Prova criptográfica de autoria |
+| Agente SSH | `keychain` com timeout de 60 minutos | A passphrase é digitada uma vez por sessão, e não a cada pull, push e commit assinado |
 | `wsl.conf` | `appendWindowsPath = false` | Impede que o PATH do Windows vaze para o Linux |
 | Liberação do PATH | Apenas o VS Code e o `C:\Windows` | Mantém o `code .` e o `explorer.exe .` funcionando, e nada além disso |
 | Node.js | `nvm` + versão LTS mais recente | Versões de Node por projeto, sem `sudo` |
@@ -148,6 +149,7 @@ Cada **losango** é uma verificação de idempotência: a etapa só é executada
 | **Ferramentas fixadas por referências imutáveis** | As GitHub Actions e o hook do Gitleaks são fixados pelo SHA do commit, e o binário do CI é conferido contra um checksum guardado neste repositório. Uma verificação recusa qualquer action sem SHA. |
 | **Dependabot com quarentena** | As actions fixadas continuam recebendo atualizações por pull requests semanais, que esperam 7 dias após cada versão e passam pelos mesmos checks. |
 | **Verificação de exposição do Docker** | Alerta quando o `DOCKER_HOST` aponta para TCP sem TLS: controlar o Docker equivale a ter acesso de root. |
+| **Agente SSH com timeout** | A chave continua cifrada no disco; o agente a mantém destravada na memória por apenas 60 minutos. Digitar a passphrase a cada operação empurra as pessoas a removê-la, o que é pior. Uma configuração manual do `keychain` já existente é respeitada, não duplicada. |
 | **Nenhum segredo no repositório** | Senhas, *passphrases* e tokens ficam em um gerenciador de senhas, nunca no código. |
 
 ## 🚀 Como usar
