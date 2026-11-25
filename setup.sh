@@ -8,6 +8,8 @@ readonly DEVKIT_GIT_NAME="ADSLustosa"
 readonly DEVKIT_GIT_EMAIL="161537433+ADSLustosa@users.noreply.github.com"
 readonly DEVKIT_NVM_VERSION="v0.40.3"
 readonly DEVKIT_MARCADOR_PATH="# --- Caminhos do Windows liberados manualmente"
+readonly DEVKIT_MARCADOR_KEYCHAIN="# --- Agente SSH (keychain) do secure-wsl-devkit"
+readonly DEVKIT_KEYCHAIN_TIMEOUT_MIN=60
 
 # Pontos de injeção para testes: em uso normal, valem os padrões do WSL.
 # O teste de integração (tests/fresh-install.sh) aponta para um WSL simulado.
@@ -89,6 +91,29 @@ configurar_pre_commit() {
   git config --global init.templateDir "$template"
   pre-commit init-templatedir --hook-type pre-commit "$template" > /dev/null
   echo "Repositórios novos com .pre-commit-config.yaml já nascem com os hooks ativos."
+}
+
+configurar_keychain() {
+  log "Ativando o agente SSH (keychain)"
+  # Sem agente, a passphrase é pedida a cada pull, push e commit assinado. O keychain
+  # guarda a chave destravada na memória por um tempo limitado; no disco, ela continua cifrada.
+  # A detecção procura qualquer ativação do keychain, não só a do devkit, para respeitar
+  # uma configuração manual já existente em vez de duplicá-la.
+  if grep -qE 'keychain .*--eval' "$HOME/.bashrc" 2>/dev/null; then
+    echo "Já configurado. Nada a fazer."
+    if ! grep -qE 'keychain .*--timeout' "$HOME/.bashrc"; then
+      aviso "O keychain do .bashrc não tem --timeout: a chave fica destravada até a distro desligar."
+    fi
+    return
+  fi
+
+  {
+    printf '\n%s ---\n' "$DEVKIT_MARCADOR_KEYCHAIN"
+    printf '# Passphrase pedida uma vez; a chave fica destravada na memória por %s minutos.\n' "$DEVKIT_KEYCHAIN_TIMEOUT_MIN"
+    # shellcheck disable=SC2016  # $HOME e $(...) devem ficar literais, para rodar em cada terminal
+    printf 'if [ -f "$HOME/.ssh/id_ed25519" ]; then eval "$(keychain --eval --quiet --timeout %s id_ed25519)"; fi\n' "$DEVKIT_KEYCHAIN_TIMEOUT_MIN"
+  } >> "$HOME/.bashrc"
+  echo "keychain ativado (timeout de $DEVKIT_KEYCHAIN_TIMEOUT_MIN minutos). Vale a partir do próximo terminal."
 }
 
 configurar_wsl_conf() {
@@ -256,6 +281,7 @@ main() {
   instalar_pacotes
   configurar_git
   configurar_pre_commit
+  configurar_keychain
   configurar_wsl_conf
   configurar_path_windows
   instalar_node

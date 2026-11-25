@@ -118,6 +118,7 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | Git | Identity, `main` as default branch, `pull.rebase`, `autocrlf input`, `fetch.prune` | Linear history, Linux line endings and a clean list of branches |
 | pre-commit | `init.templateDir` with the pre-commit hook | Every new clone with a `.pre-commit-config.yaml` gets the hooks automatically |
 | Commit signing | `gpg.format ssh`, signing key and `allowed_signers` | Cryptographic proof of authorship |
+| SSH agent | `keychain` with a 60-minute timeout | The passphrase is typed once per session, not on every pull, push and signed commit |
 | `wsl.conf` | `appendWindowsPath = false` | Stops the Windows PATH from leaking into Linux |
 | PATH allowlist | Only VS Code and `C:\Windows` | Keeps `code .` and `explorer.exe .` working, nothing else |
 | Node.js | `nvm` + latest LTS | Per-project Node versions without `sudo` |
@@ -148,6 +149,7 @@ Each **diamond** is an idempotency check: the step only runs when the configurat
 | **Tools pinned to immutable references** | GitHub Actions and the Gitleaks hook are pinned by commit SHA, and the CI binary is verified against a checksum stored in this repository. A check rejects any unpinned action. |
 | **Dependabot with a cooldown** | Pinned actions still get updates through weekly pull requests, which wait 7 days after a release and pass the same checks. |
 | **Docker daemon exposure check** | Warns when `DOCKER_HOST` points to TCP without TLS: control of Docker is equivalent to root access. |
+| **SSH agent with a timeout** | The key stays encrypted on disk; the agent keeps it unlocked in memory for 60 minutes only. Typing the passphrase on every operation pushes people to remove it, which is worse. An existing manual `keychain` setup is respected, not duplicated. |
 | **No secrets in the repository** | Passwords, passphrases and tokens live in a password manager, never in code. |
 
 ## 🚀 Quick start
