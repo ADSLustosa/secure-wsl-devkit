@@ -20,11 +20,76 @@
 
 🌐 **English** · [Português](README.pt-BR.md)
 
-**[Why](#-why-this-exists)** · **[Demo](#-see-it-in-action)** · **[Impact](#-measured-impact)** · **[How it works](#-how-it-works)** · **[Security](#-security-decisions)** · **[Quick start](#-quick-start)** · **[Roadmap](#-roadmap)**
+**[Plain language](#-in-plain-language)** · **[Why](#-why-this-exists)** · **[Demo](#-see-it-in-action)** · **[Impact](#-measured-impact)** · **[How it works](#-how-it-works)** · **[Security](#-security-decisions)** · **[Quick start](#-quick-start)** · **[Roadmap](#-roadmap)**
 
 </div>
 
 ---
+
+## 👋 In plain language
+
+> **Not a developer?** This section explains the project without jargon. Developers can skip to [Why this exists](#-why-this-exists).
+
+### What is this project?
+
+A tool that **prepares a computer for software development, automatically and securely**. Instead of following a long checklist by hand, and possibly forgetting a step, the developer runs a single command and the computer ends up configured the same way, every time.
+
+Think of the difference between assembling furniture from the manual and having a robot that assembles it exactly right, every time, and then checks its own work.
+
+### What is WSL?
+
+Most of the software behind websites, apps and online services runs on **Linux**, an operating system different from Windows. Developers who work on Windows still need Linux to build and test that software.
+
+**WSL** (*Windows Subsystem for Linux*) is a Microsoft feature that runs **a complete Linux inside Windows**, side by side, without a second computer. Picture two rooms in the same house: Windows lives in one, Linux in the other.
+
+### Why is this project needed?
+
+Out of the box, the doors between those two rooms are wide open, and that causes real problems:
+
+- **Tools get mixed up.** A Windows program can be used by mistake where the Linux version was expected. Things seem to work, but with silent errors that take hours to track down. On the author's computer, **32 Windows folders** were leaking into Linux.
+- **Each computer ends up different.** Manual steps are forgotten or done differently, so code that works on one machine breaks on another: the classic *"but it works on my machine"*.
+- **Authorship can be faked.** Without extra configuration, anyone can publish code under your name, and there is no proof of who wrote what.
+
+### What it does, in practice
+
+| Before | After running the project |
+|---|---|
+| A long checklist of manual commands | One command |
+| 32 Windows folders leaking into Linux | Only 2, deliberately allowed |
+| Windows tools taking the place of Linux tools | None, and the setup checks it |
+| Code that anyone could publish under your name | Every change carries a digital signature |
+| Running the setup again could break things | Safe to repeat: it detects what is already done |
+
+### Why it matters for a company
+
+- **Faster onboarding:** a new developer's computer is prepared with one command, configured exactly like the rest of the team's.
+- **Security by default:** every change is signed, passwords and keys never enter the code, and any attempt to publish one is blocked automatically.
+- **Reliability:** every change to this project is tested automatically on clean computers before it is accepted.
+
+### What it shows about the author (for recruiters)
+
+| Skill | Evidence in this repository |
+|---|---|
+| Automation with Linux and Bash | `setup.sh`: 10 steps, safe to run as many times as needed |
+| Information security | Signed commits, secret scanning in three layers, least-privilege configuration |
+| Automated testing and CI/CD | Every change is tested on clean Ubuntu 24.04 and 26.04 by GitHub Actions |
+| Professional Git workflow | Issues, pull requests, protected main branch and versioned releases |
+| Real-world problem solving | v1.0.1: validated on a second real computer; 5 issues were found, diagnosed and resolved, with automated tests for the bugs |
+| Technical communication | Bilingual documentation for technical and non-technical readers |
+
+<details>
+<summary><b>📖 Mini glossary</b> (click to expand)</summary>
+<br>
+
+- **Operating system:** the base software of a computer, such as Windows, Linux or macOS.
+- **Terminal:** a text window where commands are typed.
+- **Script:** a file with instructions the computer runs in order, like an automated checklist.
+- **Commit:** a saved, recorded change to the code. A **signed commit** carries a digital signature that proves who made it.
+- **CI (continuous integration):** automatic tests that run on every change before it is accepted.
+- **Idempotent:** running it once or many times gives the same result, like pressing an elevator button twice.
+- **Secret:** a password, token or key that must never be published.
+
+</details>
 
 ## 📌 Why this exists
 
